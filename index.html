@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IB Games</title>
+  <meta name="description" content="Kleine interaktive Lernspiele für den Einstieg in die Informatische Bildung.">
+  <style>
+    :root{color-scheme:dark;--bg:#050811;--card:#0c1222;--line:#24324a;--text:#f8fafc;--muted:#9ca9bc;--cyan:#22d3ee;--green:#34d399;--violet:#a78bfa}
+    *{box-sizing:border-box} body{margin:0;min-height:100vh;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:radial-gradient(circle at 15% 10%,rgba(34,211,238,.12),transparent 30%),radial-gradient(circle at 85% 15%,rgba(167,139,250,.12),transparent 30%),var(--bg);color:var(--text)}
+    main{width:min(1040px,calc(100% - 32px));margin:auto;padding:clamp(40px,8vw,88px) 0}
+    .eyebrow{font:700 .78rem ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.15em;text-transform:uppercase;color:var(--cyan)}
+    h1{font-size:clamp(2.6rem,7vw,5.4rem);line-height:.95;margin:.25em 0 .22em;letter-spacing:-.055em}.lead{max-width:690px;color:var(--muted);font-size:clamp(1rem,2vw,1.25rem);line-height:1.6;margin:0 0 38px}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.card{position:relative;display:flex;flex-direction:column;min-height:310px;padding:28px;border:1px solid var(--line);border-radius:26px;background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.015));text-decoration:none;color:inherit;box-shadow:0 22px 70px rgba(0,0,0,.25);transition:.18s ease}.card:hover{transform:translateY(-4px);border-color:#425475}.icon{font-size:3rem;margin-bottom:auto}.tag{display:inline-flex;width:max-content;margin:26px 0 10px;padding:6px 10px;border-radius:999px;font:700 .72rem ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.06em;background:#0e2231;color:var(--cyan)}.card:nth-child(2) .tag{background:#13291f;color:var(--green)}h2{font-size:1.65rem;margin:0 0 8px}.desc{color:var(--muted);line-height:1.55;margin:0 0 22px}.go{font-weight:800}.card:first-child .go{color:var(--cyan)}.card:nth-child(2) .go{color:var(--green)}footer{margin-top:30px;color:#66758b;font-size:.82rem}
+    @media(max-width:700px){.grid{grid-template-columns:1fr}.card{min-height:260px}}
+  </style>
+</head>
+<body>
+  <main>
+    <div class="eyebrow">Informatische Bildung · Sek I</div>
+    <h1>IB Games</h1>
+    <p class="lead">Zwei interaktive Einstiege für die 7. Klasse: zuerst Algorithmen und Debugging erleben – danach Bits und Binärzahlen spielerisch verstehen.</p>
+    <section class="grid" aria-label="Lernspiele">
+      <a class="card" href="bot-labyrinth.html">
+        <div class="icon">🤖</div>
+        <span class="tag">ALGORITHMEN · DEBUGGING</span>
+        <h2>Bot-Labyrinth</h2>
+        <p class="desc">Programmiere einen Robo-Bug mit einfachen Befehlen durch das Labyrinth. Ideal als erster Kontakt mit Algorithmen.</p>
+        <span class="go">Spiel starten →</span>
+      </a>
+      <a class="card" href="byte-blaster.html">
+        <div class="icon">💾</div>
+        <span class="tag">BITS · BINÄR · ASCII</span>
+        <h2>Byte Blaster</h2>
+        <p class="desc">Baue Dezimalzahlen mit Bits und entdecke später, wie Zahlen zu Zeichen werden. Für den Einstieg am besten mit 4 Bit beginnen.</p>
+        <span class="go">Spiel starten →</span>
+      </a>
+    </section>
+    <footer>IB Games · kleine browserbasierte Lernspiele ohne Installation</footer>
+  </main>
+</body>
+</html>
