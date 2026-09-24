@@ -1,0 +1,34 @@
+/* ---------- global panel language ---------- */
+main#zoomContainer { position:relative; z-index:2; }
+.gfx-panel,.gfx-modal,.gfx-calc-deck,.gfx-reference,.gfx-matrix-deck,.gfx-hint {
+  border:1px solid var(--bb-line) !important;
+  background:linear-gradient(145deg,rgba(17,32,65,.88),rgba(5,12,29,.96)) !important;
+  box-shadow:var(--bb-shadow),var(--bb-inset) !important;
+}
+.gfx-panel,.gfx-modal { position:relative; overflow:hidden; }
+.gfx-panel::before,.gfx-modal::before {
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background:linear-gradient(115deg,rgba(255,255,255,.045),transparent 24%,transparent 72%,rgba(34,231,255,.025));
+}
+.gfx-panel > *,.gfx-modal > * { position:relative; z-index:1; }
+.gfx-stat-card {
+  border:1px solid rgba(84,126,201,.30) !important;
+  background:linear-gradient(180deg,rgba(22,40,80,.88),rgba(7,15,34,.96)) !important;
+  box-shadow:inset 0 1px rgba(255,255,255,.055),0 10px 24px rgba(0,0,0,.20) !important;
+}
+.gfx-action,.tutorial-next {
+  appearance:none;
+  min-height:44px;
+  border:1px solid rgba(255,255,255,.20) !important;
+  border-radius:12px !important;
+  font-weight:900 !important;
+  letter-spacing:.055em !important;
+  box-shadow:0 12px 28px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.30) !important;
+  cursor:pointer;
+}
+.gfx-action:hover,.tutorial-next:hover { transform:translateY(-1px); filter:brightness(1.08); }
+.gfx-action:active,.tutorial-next:active { transform:translateY(1px) scale(.985); }
+button:focus-visible {
+  outline:2px solid rgba(126,240,255,.95) !important;
+  outline-offset:2px !important;
+}

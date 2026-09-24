@@ -1,0 +1,142 @@
+    /* =======================================================================
+       MOBILE QA PASS #2 — short landscape, safe areas, touch polish
+       ======================================================================= */
+    @media (pointer: coarse) {
+      button,
+      .bit-btn,
+      .mode-tab,
+      .matrix-bit-btn {
+        -webkit-tap-highlight-color: transparent;
+      }
+      #mode-tabs {
+        scroll-snap-type: x proximity;
+      }
+      .mode-tab {
+        scroll-snap-align: start;
+        flex: 0 0 auto;
+        white-space: nowrap;
+      }
+    }
+
+    @supports (padding: max(0px)) {
+      @media (pointer: coarse), (max-width: 900px) {
+        header {
+          padding-left: max(.65rem, env(safe-area-inset-left)) !important;
+          padding-right: max(.65rem, env(safe-area-inset-right)) !important;
+          padding-top: max(.45rem, env(safe-area-inset-top)) !important;
+        }
+        #zoomContainer {
+          padding-left: max(.65rem, env(safe-area-inset-left)) !important;
+          padding-right: max(.65rem, env(safe-area-inset-right)) !important;
+          padding-bottom: max(.65rem, env(safe-area-inset-bottom)) !important;
+        }
+        #onboardingModal,
+        #asciiRevealModal,
+        #explainerModal {
+          padding-left: max(1rem, env(safe-area-inset-left)) !important;
+          padding-right: max(1rem, env(safe-area-inset-right)) !important;
+          padding-top: max(1rem, env(safe-area-inset-top)) !important;
+          padding-bottom: max(1rem, env(safe-area-inset-bottom)) !important;
+        }
+        #milestoneToast {
+          bottom: max(1.25rem, env(safe-area-inset-bottom)) !important;
+        }
+      }
+    }
+
+    /* Phones in landscape used to spend almost half the screen on the header.
+       Keep all controls, but place title + controls on one row. */
+    @media (max-height: 500px) and (orientation: landscape) and (pointer: coarse) {
+      header {
+        grid-template-columns: max-content minmax(0, 1fr) !important;
+        grid-template-rows: auto auto !important;
+        gap: .35rem .55rem !important;
+        padding-top: max(.35rem, env(safe-area-inset-top)) !important;
+        padding-bottom: .35rem !important;
+      }
+      header > div:first-child {
+        grid-column: 1;
+        grid-row: 1;
+      }
+      .gfx-logo,
+      #arena-badge,
+      #header-subtitle {
+        display: none !important;
+      }
+      header h1 {
+        font-size: .88rem !important;
+        line-height: 1 !important;
+      }
+      #header-controls {
+        grid-column: 2;
+        grid-row: 1;
+        width: 100%;
+        min-width: 0;
+        height: 44px;
+        justify-content: flex-end;
+        padding-bottom: 0 !important;
+      }
+      #mode-tabs {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        min-width: 0;
+        padding: 0 !important;
+      }
+      #mode-tabs .mode-tab {
+        min-height: 44px;
+        padding-top: .35rem !important;
+        padding-bottom: .35rem !important;
+      }
+      #zoom-presets {
+        display: none !important;
+      }
+      #zoomContainer {
+        padding-top: .45rem !important;
+      }
+    }
+
+    /* Very short portrait devices: reserve the scarce vertical space for play. */
+    @media (max-width: 360px) and (max-height: 520px) and (orientation: portrait) {
+      header > div:first-child {
+        display: none !important;
+      }
+      #mode-tabs {
+        grid-column: 1 / -1 !important;
+        grid-row: 1 !important;
+      }
+      #header-controls {
+        grid-column: 1 / -1 !important;
+        grid-row: 2 !important;
+        width: 100%;
+      }
+    }
+
+    /* Extremely short landscape screens: modal content must start at the top
+       so the first controls can never be centered above the scrollable area. */
+    @media (max-height: 420px) and (orientation: landscape) {
+      #onboardingModal,
+      #asciiRevealModal,
+      #explainerModal {
+        align-items: flex-start !important;
+        justify-content: center !important;
+        padding-top: max(.5rem, env(safe-area-inset-top)) !important;
+        padding-bottom: max(.5rem, env(safe-area-inset-bottom)) !important;
+      }
+      #onboardingModal > div,
+      #asciiRevealModal > div {
+        padding: 1rem !important;
+        border-radius: 1rem !important;
+        margin: auto 0;
+      }
+      #onboardingModal > div > div:first-child {
+        margin-bottom: .65rem !important;
+      }
+      #onboardingModal h2 {
+        font-size: 1.25rem !important;
+        line-height: 1.2 !important;
+      }
+      .tutorial-value {
+        min-height: 52px;
+        font-size: 1.5rem;
+      }
+    }

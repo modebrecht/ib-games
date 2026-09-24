@@ -1,0 +1,62 @@
+/* ---------- TRAINING / SPEEDRUN ---------- */
+#view-speedrun { gap:12px !important; }
+#view-speedrun > .gfx-target-panel {
+  min-height:150px;
+  padding:18px 22px !important;
+  border-radius:24px !important;
+  border-color:rgba(34,231,255,.32) !important;
+  background:
+    radial-gradient(circle at 9% 30%,rgba(34,231,255,.15),transparent 26%),
+    linear-gradient(135deg,rgba(15,36,74,.94),rgba(5,13,31,.97)) !important;
+}
+#view-speedrun > .gfx-target-panel::after {
+  content:""; position:absolute; left:0; top:18%; bottom:18%; width:3px; border-radius:999px;
+  background:linear-gradient(#aaf9ff,var(--bb-cyan),rgba(34,231,255,.08));
+  box-shadow:0 0 18px rgba(34,231,255,.72);
+}
+#sr-target-number {
+  display:inline-block;
+  font-size:clamp(4.6rem,8vw,7.2rem) !important;
+  line-height:.82 !important;
+  color:#bdf8ff !important;
+  text-shadow:0 0 12px rgba(34,231,255,.88),0 0 38px rgba(34,231,255,.28),0 10px 30px rgba(0,0,0,.50) !important;
+}
+#sr-stats { gap:10px !important; }
+#sr-stats .gfx-stat-card { min-width:112px; padding:10px 12px !important; border-radius:14px !important; }
+#sr-streak-display,#sr-timer-display { margin-top:5px; }
+#sr-switch-toolbar {
+  min-height:42px;
+  padding:0 2px 9px !important;
+  border-bottom:1px solid rgba(77,116,184,.24) !important;
+}
+#sr-bitwork-label { color:#69ffac !important; letter-spacing:.08em; }
+#sr-clear-btn,#sr-invert-btn {
+  appearance:none;
+  min-height:36px;
+  padding:6px 12px !important;
+  border-radius:10px !important;
+  border:1px solid rgba(75,111,176,.30) !important;
+  background:linear-gradient(180deg,rgba(17,31,60,.96),rgba(6,13,29,.98)) !important;
+  color:#b2c0d5 !important;
+  font-weight:800;
+}
+#sr-clear-btn:hover,#sr-invert-btn:hover { border-color:rgba(34,231,255,.42) !important; color:#e8fbff !important; }
+#sr-calc-deck {
+  min-height:96px;
+  padding:14px 16px !important;
+  border-radius:18px !important;
+  background:linear-gradient(180deg,rgba(4,10,24,.92),rgba(7,15,34,.98)) !important;
+}
+#sr-current-sum { min-width:3ch; text-align:center; font-size:2rem !important; color:#f4fbff !important; }
+#sr-btn-check {
+  min-width:170px;
+  background:linear-gradient(135deg,#48ff9b,#17ce71) !important;
+  color:#02120a !important;
+  box-shadow:0 12px 26px rgba(12,220,111,.20),inset 0 1px rgba(255,255,255,.40) !important;
+}
+.gfx-hint {
+  min-height:58px;
+  padding:12px 14px !important;
+  border-left:3px solid rgba(255,181,33,.75) !important;
+  border-radius:14px !important;
+}

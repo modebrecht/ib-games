@@ -1,0 +1,55 @@
+/* Switches — consistent physical arcade controls */
+.bit-btn {
+  appearance:none;
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  min-width:0;
+  min-height:98px;
+  padding:9px !important;
+  border:1px solid rgba(72,109,177,.38) !important;
+  border-radius:15px !important;
+  background:linear-gradient(165deg,#17264d 0%,#0a142d 50%,#050b19 100%) !important;
+  color:#8fa2c0 !important;
+  box-shadow:0 12px 24px rgba(0,0,0,.34),inset 0 1px rgba(255,255,255,.055),inset 0 -7px 15px rgba(0,0,0,.28) !important;
+  cursor:pointer;
+  transition:transform .13s cubic-bezier(.2,.8,.2,1),border-color .15s ease,filter .15s ease,box-shadow .15s ease !important;
+}
+.bit-btn::before {
+  content:""; position:absolute; inset:1px 1px auto 1px; height:38%; border-radius:inherit; z-index:0;
+  background:linear-gradient(180deg,rgba(255,255,255,.075),transparent); pointer-events:none;
+}
+.bit-btn > * { position:relative; z-index:1; }
+.bit-btn:hover { transform:translateY(-2px); border-color:rgba(77,145,240,.62) !important; filter:brightness(1.08); }
+.bit-btn:active { transform:translateY(2px) scale(.985); }
+.bit-btn.bit-active {
+  background:linear-gradient(160deg,#55ff9c 0%,#16d96a 50%,#079249 100%) !important;
+  border-color:#b3ffd0 !important;
+  color:#02140b !important;
+  box-shadow:0 0 0 1px rgba(53,247,140,.25),0 0 25px rgba(53,247,140,.35),0 12px 25px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.55) !important;
+}
+.bit-btn.bit-active-pink {
+  background:linear-gradient(160deg,#ff76c3 0%,#ff268e 50%,#b30b60 100%) !important;
+  border-color:#ffd1e8 !important;
+  color:white !important;
+  box-shadow:0 0 0 1px rgba(255,79,172,.24),0 0 25px rgba(255,79,172,.34),0 12px 25px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.42) !important;
+}
+.bit-value-row { width:100%; display:grid; grid-template-columns:9px 1fr 9px; align-items:center; min-height:42px; }
+.bit-led { width:7px; height:7px; border-radius:50%; background:#20304f; box-shadow:inset 0 1px 2px rgba(0,0,0,.8); }
+.bit-active .bit-led { background:#e8fff0; box-shadow:0 0 12px rgba(255,255,255,.92); }
+.bit-active-pink .bit-led { background:#fff; box-shadow:0 0 12px rgba(255,255,255,.92); }
+.bit-value { text-align:center; font-size:clamp(1.35rem,2.6vw,2.25rem) !important; color:#dce9fb !important; text-shadow:0 4px 12px rgba(0,0,0,.30); }
+.bit-active .bit-value { color:#03150b !important; text-shadow:0 1px rgba(255,255,255,.28); }
+.bit-active-pink .bit-value { color:white !important; }
+.bit-key { color:#667997 !important; }
+.bit-state {
+  padding:5px 4px !important;
+  border-radius:8px !important;
+  border:1px solid rgba(76,110,172,.26);
+  background:rgba(1,5,13,.44);
+  color:#7183a1;
+  text-align:center;
+  letter-spacing:.12em;
+}
+.bit-active .bit-state { background:rgba(1,35,17,.26); color:#072615; border-color:rgba(3,78,37,.25); }
+.bit-active-pink .bit-state { background:rgba(71,3,35,.26); color:white; border-color:rgba(255,255,255,.20); }
