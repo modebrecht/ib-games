@@ -119,7 +119,11 @@
 
   const debugTip = document.getElementById('debug-tip');
   if (debugTip) {
-    debugTip.innerHTML = '<strong>Festgefahren?</strong> Tippe auf <strong>SCHRITT</strong>. Der Bot führt dann nur einen Befehl aus – so siehst du sofort, wo es schiefgeht.';
+    const skipButton = debugTip.querySelector('#btn-skip-level');
+    const copy = document.createElement('span');
+    copy.innerHTML = '<strong>Festgefahren?</strong> Tippe auf <strong>SCHRITT</strong>. Der Bot führt dann nur einen Befehl aus – so siehst du sofort, wo es schiefgeht.';
+    debugTip.replaceChildren(copy);
+    if (skipButton) debugTip.appendChild(skipButton);
   }
 
   if (typeof revealDebugTip === 'function') {
