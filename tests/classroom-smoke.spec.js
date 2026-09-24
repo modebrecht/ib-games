@@ -25,30 +25,26 @@ async function finishByteOnboarding(page) {
   await expect(modal, 'Byte onboarding must be completable without leaving the game').toBeHidden();
 }
 
-async function finishBotOnboarding(page) {
+async function releaseBotTutorialStep(page) {
   const modal = page.locator('#modal-tutorial');
   if (!(await modal.count()) || !(await modal.isVisible())) return;
 
-  for (let step = 0; step < 6 && await modal.isVisible(); step += 1) {
-    const preferred = modal.getByRole('button', { name: /Weiter|Fertig|Los geht|Start/i }).filter({ visible: true });
-    const skip = modal.getByRole('button', { name: 'Überspringen', exact: true });
-
-    if (await preferred.count() && await preferred.first().isVisible()) {
-      await preferred.first().click();
-    } else {
-      await expect(skip, `Bot onboarding step ${step + 1} needs a visible continue/skip control`).toBeVisible();
-      await skip.click();
-    }
-    await page.waitForTimeout(120);
+  const skip = modal.getByRole('button', { name: 'Überspringen', exact: true });
+  if (await skip.count() && await skip.isVisible()) {
+    await skip.click();
+  } else {
+    const advance = modal.getByRole('button').filter({ hasText: /Weiter|Fertig|Los geht|Start/i }).first();
+    await expect(advance, 'Bot tutorial needs a visible continue control').toBeVisible();
+    await advance.click();
   }
 
-  await expect(modal, 'Bot onboarding must fully release the gameplay controls').toBeHidden();
+  await expect(modal, 'Bot tutorial card must release controls for the guided action').toBeHidden();
 }
 
 test.describe('7th-grade classroom smoke · phone portrait', () => {
   test.use({ viewport: { width: 390, height: 680 }, isMobile: true, hasTouch: true });
 
-  test('Bot Labyrinth: onboarding, first command and messages stay non-blocking', async ({ page }) => {
+  test('Bot Labyrinth: guided onboarding, first run and messages stay non-blocking', async ({ page }) => {
     const pageErrors = capturePageErrors(page);
     await page.goto('/bot-labyrinth.html');
     await waitForGame(page);
@@ -56,7 +52,10 @@ test.describe('7th-grade classroom smoke · phone portrait', () => {
     await expect(page.locator('#game-canvas-shell')).toBeVisible();
     await expect(page.locator('#algorithm-panel')).toBeVisible();
     await expect(page.locator('#level-select')).toBeVisible();
-    await finishBotOnboarding(page);
+
+    // Bot onboarding is contextual: each card releases the pupil to perform
+    // the requested action, then the next card appears after that action.
+    await releaseBotTutorialStep(page);
 
     const command = page.locator('.cmd-add-btn:visible').first();
     await expect(command, 'At least one beginner command must be tappable').toBeVisible();
@@ -64,12 +63,17 @@ test.describe('7th-grade classroom smoke · phone portrait', () => {
     expect(commandBox && commandBox.height).toBeGreaterThanOrEqual(44);
     await command.click();
 
+    await page.waitForTimeout(180);
+    await releaseBotTutorialStep(page);
+
     const start = page.getByRole('button', { name: 'Algorithmus starten oder pausieren' });
     await expect(start).toBeVisible();
     const startBox = await start.boundingBox();
     expect(startBox && startBox.height).toBeGreaterThanOrEqual(44);
     await start.click();
     await page.waitForTimeout(350);
+
+    await releaseBotTutorialStep(page);
 
     const reset = page.getByRole('button', { name: 'Roboter zurücksetzen' });
     await expect(reset).toBeVisible();
