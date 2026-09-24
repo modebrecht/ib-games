@@ -25,10 +25,26 @@ async function finishByteOnboarding(page) {
   await expect(modal, 'Byte onboarding must be completable without leaving the game').toBeHidden();
 }
 
+async function passBotOnboarding(page) {
+  const tutorialLabel = page.getByText(/Mini-Tutorial/i).first();
+  if (!(await tutorialLabel.count()) || !(await tutorialLabel.isVisible())) return;
+
+  const next = page.getByRole('button', { name: 'Weiter', exact: true });
+  if (await next.count() && await next.isVisible()) {
+    await next.click();
+    await page.waitForTimeout(120);
+  }
+
+  const skipTutorial = page.getByRole('button', { name: 'Überspringen', exact: true });
+  await expect(skipTutorial, 'Bot onboarding must offer a clear escape route').toBeVisible();
+  await skipTutorial.click();
+  await expect(tutorialLabel).toBeHidden();
+}
+
 test.describe('7th-grade classroom smoke · phone portrait', () => {
   test.use({ viewport: { width: 390, height: 680 }, isMobile: true, hasTouch: true });
 
-  test('Bot Labyrinth: first interaction, level skip and messages stay non-blocking', async ({ page }) => {
+  test('Bot Labyrinth: onboarding, first command and messages stay non-blocking', async ({ page }) => {
     const pageErrors = capturePageErrors(page);
     await page.goto('/bot-labyrinth.html');
     await waitForGame(page);
@@ -36,11 +52,7 @@ test.describe('7th-grade classroom smoke · phone portrait', () => {
     await expect(page.locator('#game-canvas-shell')).toBeVisible();
     await expect(page.locator('#algorithm-panel')).toBeVisible();
     await expect(page.locator('#level-select')).toBeVisible();
-
-    const skip = page.locator('#btn-skip-level');
-    await expect(skip).toBeVisible();
-    const skipBox = await skip.boundingBox();
-    expect(skipBox && skipBox.height).toBeGreaterThanOrEqual(44);
+    await passBotOnboarding(page);
 
     const command = page.locator('.cmd-add-btn:visible').first();
     await expect(command, 'At least one beginner command must be tappable').toBeVisible();
@@ -48,11 +60,16 @@ test.describe('7th-grade classroom smoke · phone portrait', () => {
     expect(commandBox && commandBox.height).toBeGreaterThanOrEqual(44);
     await command.click();
 
-    const beforeLevel = await page.locator('#level-select').inputValue();
-    await skip.click();
-    await expect.poll(() => page.locator('#level-select').inputValue(), {
-      message: 'Skip level should visibly advance the selected level'
-    }).not.toBe(beforeLevel);
+    const start = page.getByRole('button', { name: 'Algorithmus starten oder pausieren' });
+    await expect(start).toBeVisible();
+    const startBox = await start.boundingBox();
+    expect(startBox && startBox.height).toBeGreaterThanOrEqual(44);
+    await start.click();
+    await page.waitForTimeout(350);
+
+    const reset = page.getByRole('button', { name: 'Roboter zurücksetzen' });
+    await expect(reset).toBeVisible();
+    await reset.click();
 
     const toast = page.locator('#toast-alert');
     await page.evaluate(() => showToast('Classroom smoke message', 'info'));
