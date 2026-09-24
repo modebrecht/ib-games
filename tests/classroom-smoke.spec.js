@@ -52,6 +52,7 @@ test.describe('7th-grade classroom smoke · phone portrait', () => {
     await expect(page.locator('#game-canvas-shell')).toBeVisible();
     await expect(page.locator('#algorithm-panel')).toBeVisible();
     await expect(page.locator('#level-select')).toBeVisible();
+    await expect(page.locator('#btn-skip-level'), 'Debug hint rewrites must preserve the level-skip control').toHaveCount(1);
 
     // Bot onboarding is contextual: each card releases the pupil to perform
     // the requested action, then the next card appears after that action.
@@ -131,6 +132,7 @@ test.describe('7th-grade classroom smoke · phone landscape', () => {
     await waitForGame(page);
     await expect(page.locator('#game-canvas-shell')).toBeVisible();
     await expect(page.locator('#action-bar button:visible').first()).toBeVisible();
+    await expect(page.locator('#btn-skip-level')).toHaveCount(1);
 
     await page.addInitScript(() => localStorage.clear());
     await page.goto('/byte-blaster.html');
