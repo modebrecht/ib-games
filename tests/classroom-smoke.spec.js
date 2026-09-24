@@ -11,18 +11,27 @@ function capturePageErrors(page) {
   return errors;
 }
 
-async function finishByteOnboarding(page) {
+async function releaseByteTutorial(page) {
   const modal = page.locator('#onboardingModal');
-  if (!(await modal.count()) || !(await modal.isVisible())) return;
+  if (!(await modal.count())) return;
 
-  for (let step = 0; step < 10 && await modal.isVisible(); step += 1) {
+  // Byte onboarding is staged: a card can close and the next card can open
+  // shortly afterwards. Only return once the modal stays closed long enough
+  // for the pupil's next interaction to be genuinely available.
+  for (let step = 0; step < 12; step += 1) {
+    await page.waitForTimeout(180);
+    if (!(await modal.isVisible())) {
+      await page.waitForTimeout(180);
+      if (!(await modal.isVisible())) return;
+      continue;
+    }
+
     const next = page.locator('.tutorial-next:visible').last();
     await expect(next, `Byte onboarding step ${step + 1} needs a visible continue control`).toBeVisible();
     await next.click();
-    await page.waitForTimeout(120);
   }
 
-  await expect(modal, 'Byte onboarding must be completable without leaving the game').toBeHidden();
+  await expect(modal, 'Byte onboarding must release the gameplay controls').toBeHidden();
 }
 
 async function releaseBotTutorialStep(page) {
@@ -95,7 +104,7 @@ test.describe('7th-grade classroom smoke · phone portrait', () => {
     await page.goto('/byte-blaster.html');
     await waitForGame(page);
 
-    await finishByteOnboarding(page);
+    await releaseByteTutorial(page);
 
     await expect(page.locator('#view-speedrun')).toBeVisible();
     const bits = page.locator('#sr-switches-container .bit-btn:visible');
@@ -104,13 +113,16 @@ test.describe('7th-grade classroom smoke · phone portrait', () => {
     const firstBit = bits.first();
     const bitBox = await firstBit.boundingBox();
     expect(bitBox && bitBox.height).toBeGreaterThanOrEqual(44);
-    await firstBit.click();
+    await releaseByteTutorial(page);
+    await firstBit.click({ timeout: 5000 });
 
+    await releaseByteTutorial(page);
     const check = page.locator('#sr-btn-check');
     await expect(check).toBeVisible();
     const checkBox = await check.boundingBox();
     expect(checkBox && checkBox.height).toBeGreaterThanOrEqual(44);
-    await check.click();
+    await check.click({ timeout: 5000 });
+    await releaseByteTutorial(page);
 
     const activeTab = page.locator('#mode-tabs .mode-tab.bg-cyan-950:visible').first();
     await expect(activeTab, 'The active mode must remain visible after onboarding').toBeVisible();
@@ -142,8 +154,8 @@ test.describe('7th-grade classroom smoke · phone landscape', () => {
     if (await onboarding.count() && await onboarding.isVisible()) {
       const box = await onboarding.boundingBox();
       expect(box && box.height).toBeLessThanOrEqual(390);
-      await finishByteOnboarding(page);
     }
+    await releaseByteTutorial(page);
 
     await expect(page.locator('#mode-tabs')).toBeVisible();
     await expect(page.locator('#view-speedrun')).toBeVisible();
