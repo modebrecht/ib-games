@@ -17,6 +17,17 @@
     setTimeout(() => el.classList.remove(cls), ms);
   };
 
+  function replaceTeamBattleCopy(root) {
+    if (!root) return;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    let node;
+    while ((node = walker.nextNode())) {
+      if (node.nodeValue && node.nodeValue.includes('Simultan-Duell')) {
+        node.nodeValue = node.nodeValue.replaceAll('Simultan-Duell', 'Team Battle');
+      }
+    }
+  }
+
   function centerActiveTab() {
     if (!tabs || window.innerWidth > 900) return;
     const active = tabs.querySelector('.mode-tab.bg-cyan-950:not(.hidden)');
@@ -34,6 +45,13 @@
       retrigger(document.getElementById(`view-${mode}`), 'bb-mode-enter', 360);
     }
     requestAnimationFrame(centerActiveTab);
+  }
+
+  replaceTeamBattleCopy(body);
+  const milestoneToast = document.getElementById('milestoneToast');
+  if (milestoneToast) {
+    new MutationObserver(() => replaceTeamBattleCopy(milestoneToast))
+      .observe(milestoneToast, {childList:true, characterData:true, subtree:true});
   }
 
   const watchIds = ['sr-target-number','duel-target-left','duel-target-right','ascii-char-target','ascii-dec-target','matrix-score','sr-current-sum','sr-streak-display','drop-target','drop-score','drop-combo'];
