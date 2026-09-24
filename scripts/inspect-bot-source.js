@@ -16,22 +16,8 @@ function showAround(match, before = 6, after = 24) {
   }
 }
 
-function showOccurrences(match) {
-  console.log(`\n--- occurrences: ${match} ---`);
-  lines.forEach((line, index) => {
-    if (line.includes(match)) console.log(`${index + 1}: ${line}`);
-  });
-}
-
-showAround('function executeForward', 4, 42);
-showAround('function loadLevel', 8, 80);
-showOccurrences('btn-skip-level');
-showOccurrences('gridSize');
-
-const htmlIds = new Set([...source.matchAll(/\bid=["']([^"']+)["']/g)].map(m => m[1]));
-const listeners = [...source.matchAll(/document\.getElementById\(["']([^"']+)["']\)\.addEventListener/g)];
-console.log('\n--- direct getElementById(...).addEventListener checks ---');
-for (const match of listeners) {
-  const line = source.slice(0, match.index).split('\n').length;
-  console.log(`${line}: #${match[1]} html-id=${htmlIds.has(match[1]) ? 'present' : 'MISSING'}`);
-}
+showAround('const LEVELS =', 0, 100);
+showAround('function updateClassroomChrome', 4, 55);
+showAround("document.getElementById('btn-play').addEventListener", 12, 35);
+showAround('function resetBot', 3, 35);
+showAround('const AppState =', 0, 55);
