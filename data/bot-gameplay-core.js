@@ -1,3 +1,6 @@
+// Bot Labyrinth gameplay core rules.
+// Production module: immediate win resolution once goal + required data are complete.
+
 (() => {
   if (typeof executeNextStep !== 'function' || typeof checkGoalCondition !== 'function') return;
 

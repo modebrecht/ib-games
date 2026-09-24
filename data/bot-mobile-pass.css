@@ -53,8 +53,8 @@
   .debug-layout #mission-card { display: none; }
   #game-hud { padding-top: .2rem; padding-bottom: .2rem; }
   #mission-card { padding-top: .3rem; padding-bottom: .3rem; }
-  #mission-card > div { font-size: .5rem; }
-  #mission-text { font-size: .65rem; line-height: 1.15; }
+  #mission-card > div { font-size: .6875rem; line-height: 1.2; }
+  #mission-text { font-size: .75rem; line-height: 1.25; }
   #mechanic-hint { display: none !important; }
   .debug-layout #game-canvas-shell {
     width: min(100%, max(9.5rem, calc(100dvh - 413px)));
@@ -67,7 +67,7 @@
   #debug-tip {
     margin-bottom: .2rem;
     padding: .35rem .5rem;
-    font-size: 10px;
+    font-size: 11px;
     line-height: 1.2;
   }
   #btn-skip-level {
