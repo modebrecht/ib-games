@@ -7,7 +7,7 @@ async function waitForGame(page) {
 
 function capturePageErrors(page) {
   const errors = [];
-  page.on('pageerror', error => errors.push(error.message));
+  page.on('pageerror', error => errors.push(error.stack || error.message));
   return errors;
 }
 
@@ -85,7 +85,7 @@ test.describe('7th-grade classroom smoke · phone portrait', () => {
     await expect(toast).toHaveCSS('pointer-events', 'none');
     await expect(toast).toBeHidden({ timeout: 7500 });
 
-    expect(pageErrors, `Unexpected Bot runtime errors: ${pageErrors.join(' | ')}`).toEqual([]);
+    expect(pageErrors, `Unexpected Bot runtime errors:\n${pageErrors.join('\n---\n')}`).toEqual([]);
   });
 
   test('Byte Blaster: fresh pupil can finish onboarding and start in 4-bit mode', async ({ page }) => {
@@ -117,7 +117,7 @@ test.describe('7th-grade classroom smoke · phone portrait', () => {
     expect(activeBox && activeBox.x).toBeGreaterThanOrEqual(-1);
     expect(activeBox && activeBox.x + activeBox.width).toBeLessThanOrEqual(391);
 
-    expect(pageErrors, `Unexpected Byte runtime errors: ${pageErrors.join(' | ')}`).toEqual([]);
+    expect(pageErrors, `Unexpected Byte runtime errors:\n${pageErrors.join('\n---\n')}`).toEqual([]);
   });
 });
 
@@ -146,6 +146,6 @@ test.describe('7th-grade classroom smoke · phone landscape', () => {
     await expect(page.locator('#mode-tabs')).toBeVisible();
     await expect(page.locator('#view-speedrun')).toBeVisible();
 
-    expect(pageErrors, `Unexpected compact-landscape runtime errors: ${pageErrors.join(' | ')}`).toEqual([]);
+    expect(pageErrors, `Unexpected compact-landscape runtime errors:\n${pageErrors.join('\n---\n')}`).toEqual([]);
   });
 });
