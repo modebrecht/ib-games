@@ -16,8 +16,17 @@ function showAround(match, before = 6, after = 24) {
   }
 }
 
+function showOccurrences(match) {
+  console.log(`\n--- occurrences: ${match} ---`);
+  lines.forEach((line, index) => {
+    if (line.includes(match)) console.log(`${index + 1}: ${line}`);
+  });
+}
+
 showAround('function executeForward', 4, 42);
-showAround("getElementById('btn-exit-debug')", 10, 18);
+showAround('function loadLevel', 8, 80);
+showOccurrences('btn-skip-level');
+showOccurrences('gridSize');
 
 const htmlIds = new Set([...source.matchAll(/\bid=["']([^"']+)["']/g)].map(m => m[1]));
 const listeners = [...source.matchAll(/document\.getElementById\(["']([^"']+)["']\)\.addEventListener/g)];
