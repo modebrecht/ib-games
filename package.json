@@ -2,7 +2,7 @@
   "name": "ib-games",
   "private": true,
   "scripts": {
-    "test:classroom": "playwright test tests/classroom-smoke.spec.js"
+    "test:classroom": "playwright test tests/classroom-smoke.spec.js tests/loader-recovery.spec.js"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0"
