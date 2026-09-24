@@ -13,7 +13,7 @@
     active:false, paused:false, round:0, target:5, lastTarget:null,
     collected:new Set(), queue:[], chip:null, next:null,
     score:0, combo:0, x:.42, y:0, drag:false, raf:0, lastTs:0,
-    clearTimer:0, feedbackTimer:0
+    clearTimer:0, feedbackTimer:0, hintTimer:0, mistakesThisRound:0
   };
 
   const required = target => VALUES.filter(v => (target & v) !== 0);
@@ -27,6 +27,26 @@
     return r;
   };
   const sfx = type => { try { if (typeof playSfx === 'function') playSfx(type); } catch (_) {} };
+
+  function installFinishStyles() {
+    if ($('bbd-finish-style')) return;
+    const style = document.createElement('style');
+    style.id = 'bbd-finish-style';
+    style.textContent = `
+      .bbd-sockets i.needed{border-color:rgba(75,116,181,.34)!important;box-shadow:none!important}
+      .bbd-sockets i.hint{border-color:#fbbf24!important;box-shadow:0 0 0 2px rgba(251,191,36,.18),0 0 24px rgba(251,191,36,.22)!important;animation:bbd-hint-pulse .72s ease 2}
+      .bbd-controls{grid-template-columns:minmax(0,1fr) 58px minmax(0,1fr)!important;align-items:stretch}
+      #bbd-fast{font-size:0!important;opacity:.62;filter:saturate(.75)}
+      #bbd-fast::after{content:'▼';font-size:18px;line-height:1}
+      #bbd-fast:hover,#bbd-fast:focus-visible{opacity:1;filter:none}
+      .bbd-view[data-pressure='2'] .bbd-board{box-shadow:inset 0 0 0 1px rgba(251,191,36,.13),0 14px 35px rgba(0,0,0,.22)}
+      .bbd-view[data-pressure='3'] .bbd-board{box-shadow:inset 0 0 0 1px rgba(251,113,133,.17),0 14px 35px rgba(0,0,0,.22)}
+      .bbd-view[data-pressure='3'] .bbd-chip{box-shadow:0 0 34px rgba(34,211,238,.42),0 14px 26px rgba(0,0,0,.35),inset 0 2px rgba(255,255,255,.48)}
+      @keyframes bbd-hint-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+      @media(max-width:620px){.bbd-controls{grid-template-columns:minmax(0,1fr) 50px minmax(0,1fr)!important}#bbd-fast::after{font-size:16px}}
+    `;
+    document.head.appendChild(style);
+  }
 
   function makeUI() {
     const zoom = $('zoomContainer');
@@ -71,8 +91,8 @@
         <div class="bbd-feedback" id="bbd-feedback" aria-live="polite"></div>
         <div class="bbd-clear" id="bbd-clear" aria-live="assertive"></div>
       </div>
-      <div class="bbd-controls"><button id="bbd-left">← SAMMELN</button><button id="bbd-fast">▼ DROP</button><button id="bbd-right">🗑️ ENTSORGEN →</button></div>
-      <p class="bbd-tip">Unnötige Bits entsorgen ist richtig und kostet nichts. Ein benötigtes Bit kommt wieder.</p>
+      <div class="bbd-controls"><button id="bbd-left">← BEHALTEN</button><button id="bbd-fast" aria-label="Schnell fallen lassen" title="Schnell fallen lassen">▼ DROP</button><button id="bbd-right">🗑️ ENTSORGEN →</button></div>
+      <p class="bbd-tip">Links oder rechts wählen – der Chip fällt automatisch. Unnötige Bits entsorgen kostet nichts.</p>
       <div class="bbd-intro hidden" id="bbd-intro"><div><small>30 SEKUNDEN</small><h3>So geht Bit-Drop</h3><ol><li>Baue die Zielzahl aus fallenden Bit-Werten.</li><li>Passende Bits <b>behalten</b>.</li><li>Unpassende Bits → <b>🗑️ Papierkorb</b>.</li></ol><button id="bbd-go">LOS GEHT'S</button></div></div>`;
 
     $('bbd-left').onclick = () => steer('keep');
@@ -143,21 +163,27 @@
     const decoys=pureDecoys.length?pureDecoys:safeDupes;
     const cap=state.round<=3?1:2;
     need.forEach(v => {
-      const count=decoys.length ? (state.round<=2 ? (Math.random()<.35?1:0) : Math.floor(Math.random()*(cap+1))) : 0;
-      for(let i=0;i<Math.min(2,count);i++) state.queue.push(choose(decoys));
+      let count=0;
+      if (decoys.length) {
+        if (state.round<=2) count=Math.random()<.3?1:0;
+        else if (state.round<=7) count=Math.floor(Math.random()*2);
+        else count=1+Math.floor(Math.random()*2);
+      }
+      for(let i=0;i<Math.min(cap,count);i++) state.queue.push(choose(decoys));
       state.queue.push(v);
     });
   }
   function ensureQueue() { if (state.queue.length<3 && missing().length) buildFairQueue(); }
 
   function resetRun(show) {
-    clearTimeout(state.clearTimer); clearTimeout(state.feedbackTimer);
-    state.round=0; state.lastTarget=null; state.score=0; state.combo=0; state.queue=[]; state.collected.clear(); state.chip=null; state.next=null; state.paused=false;
-    newRound(); if(show) feedback('↻ Bit-Drop neu gestartet','info');
+    clearTimeout(state.clearTimer); clearTimeout(state.feedbackTimer); clearTimeout(state.hintTimer);
+    state.round=0; state.lastTarget=null; state.score=0; state.combo=0; state.queue=[]; state.collected.clear(); state.chip=null; state.next=null; state.paused=false; state.mistakesThisRound=0;
+    clearHint(); newRound(); if(show) feedback('↻ Bit-Drop neu gestartet','info');
   }
   function newRound() {
-    state.round++; state.lastTarget=state.target; state.target=pickTarget(); state.collected.clear(); state.queue=[]; state.chip=null; state.next=null;
-    buildFairQueue(); updateUI(); spawn();
+    clearTimeout(state.hintTimer); clearHint();
+    state.round++; state.lastTarget=state.target; state.target=pickTarget(); state.collected.clear(); state.queue=[]; state.chip=null; state.next=null; state.mistakesThisRound=0;
+    buildFairQueue(); updatePressure(); updateUI(); spawn();
   }
 
   function spawn() {
@@ -165,7 +191,18 @@
     ensureQueue(); if(!state.queue.length)return;
     state.chip={value:state.queue.shift()}; state.x=.42; state.y=0; ensureQueue(); state.next=state.queue[0]??null; updateUI(); renderChip();
   }
-  function duration() { if(state.round<=3)return 9000; if(state.round<=7)return 7200-(state.round-4)*300; return Math.max(4300,6100-(state.round-8)*160); }
+  function duration() {
+    if(state.round===1)return 7800;
+    if(state.round===2)return 7400;
+    if(state.round===3)return 7000;
+    if(state.round<=7)return 6400-(state.round-4)*300;
+    return Math.max(4200,5400-(state.round-8)*140);
+  }
+
+  function updatePressure() {
+    const view=$('view-drop'); if(!view)return;
+    view.dataset.pressure=state.round<=3?'1':state.round<=7?'2':'3';
+  }
 
   function startMode() {
     if(!state.active) { state.active=true; state.round===0?resetRun(false):(!state.chip&&spawn()); maybeIntro(); }
@@ -189,7 +226,7 @@
 
   function discard(value) {
     const needed=missing().includes(value); trashAnim();
-    if(needed) { feedback(`🗑️ ${value} entsorgt – du brauchst es noch. Es kommt wieder.`,'warn'); state.queue=[]; buildFairQueue(); }
+    if(needed) { state.mistakesThisRound++; feedback(`🗑️ ${value} entsorgt – du brauchst es noch. Es kommt wieder.`,'warn'); state.queue=[]; buildFairQueue(); if(state.mistakesThisRound>=2) scheduleHint(); }
     else feedback(`🗑️ ${value} entsorgt`,'trash');
     sfx('toggleOff'); ensureQueue(); updateUI();
   }
@@ -199,10 +236,29 @@
     state.collected.add(value); state.score+=50; feedback(`+${value}`,'good'); sfx('toggleOn'); popSocket(value); updateUI();
     total()===state.target?finishRound():ensureQueue();
   }
-  function mistake(text) { state.combo=0; feedback(text,'bad'); sfx('wrong'); const b=$('bbd-board'); b.classList.add('bbd-shake'); setTimeout(()=>b.classList.remove('bbd-shake'),360); updateUI(); ensureQueue(); }
+  function mistake(text) {
+    state.combo=0; state.mistakesThisRound++; feedback(text,'bad'); sfx('wrong');
+    const b=$('bbd-board'); b.classList.add('bbd-shake'); setTimeout(()=>b.classList.remove('bbd-shake'),360);
+    updateUI(); ensureQueue();
+    if(state.mistakesThisRound>=2) scheduleHint();
+  }
+
+  function scheduleHint() {
+    clearTimeout(state.hintTimer); clearHint();
+    const options=missing(); if(!options.length)return;
+    const value=options[0];
+    state.hintTimer=setTimeout(()=>{
+      const el=document.querySelector(`.bbd-sockets i[data-value="${value}"]`);
+      if(!el || state.collected.has(value) || !missing().includes(value))return;
+      el.classList.add('hint');
+      feedback(`💡 Tipp: Prüfe die ${value}er-Stelle.`,'info');
+      state.hintTimer=setTimeout(()=>el.classList.remove('hint'),1500);
+    },450);
+  }
+  function clearHint() { document.querySelectorAll('.bbd-sockets i.hint').forEach(el=>el.classList.remove('hint')); }
 
   function finishRound() {
-    state.paused=true; state.combo++; state.score+=500+Math.max(0,state.combo-1)*100; sfx('correct'); updateUI();
+    state.paused=true; state.combo++; state.score+=500+Math.max(0,state.combo-1)*100; sfx('correct'); clearHint(); updateUI();
     const c=$('bbd-clear'); c.innerHTML=`<div><span>PERFEKT!</span><strong>${equation()} = ${state.target} ✓</strong><em>${state.combo>1?`x${state.combo} COMBO`:'ZIEL ERREICHT'}</em></div>`; c.classList.add('show'); $('bbd-board').classList.add('bbd-success');
     state.clearTimer=setTimeout(()=>{c.classList.remove('show'); $('bbd-board').classList.remove('bbd-success'); state.paused=false; newRound(); state.lastTs=performance.now();},1000);
   }
@@ -210,7 +266,7 @@
   function updateUI() {
     const now=total(); $('drop-target').textContent=state.target; $('drop-score').textContent=String(state.score).padStart(4,'0'); $('drop-combo').textContent='x'+state.combo;
     $('bbd-equation').textContent=`${equation()} = ${now}`; $('bbd-missing').textContent=Math.max(0,state.target-now); $('bbd-next').textContent=state.next??'–';
-    document.querySelectorAll('.bbd-sockets i').forEach(el=>{const v=+el.dataset.value, on=state.collected.has(v), need=required(state.target).includes(v); el.classList.toggle('active',on); el.classList.toggle('needed',need&&!on); el.querySelector('b').textContent=on?'1':'0';});
+    document.querySelectorAll('.bbd-sockets i').forEach(el=>{const v=+el.dataset.value, on=state.collected.has(v); el.classList.toggle('active',on); el.classList.remove('needed'); el.querySelector('b').textContent=on?'1':'0';});
   }
   function renderChip() {
     const el=$('bbd-chip'); if(!state.chip){el.classList.remove('show'); $('bbd-trash').classList.remove('hot'); return;}
@@ -228,11 +284,12 @@
   }
 
   window.__bbDropV2={
-    snapshot:()=>({round:state.round,target:state.target,required:required(state.target),collected:[...state.collected],missing:missing(),queue:state.queue.slice(),score:state.score,combo:state.combo,current:state.chip?.value??null,next:state.next}),
-    forceTarget:n=>{if(!Number.isInteger(n)||n<1||n>15)throw new Error('target must be 1..15');state.target=n;state.collected.clear();state.queue=[];state.chip=null;buildFairQueue();spawn();updateUI();},
+    snapshot:()=>({round:state.round,target:state.target,required:required(state.target),collected:[...state.collected],missing:missing(),queue:state.queue.slice(),score:state.score,combo:state.combo,current:state.chip?.value??null,next:state.next,duration:duration(),mistakesThisRound:state.mistakesThisRound}),
+    forceTarget:n=>{if(!Number.isInteger(n)||n<1||n>15)throw new Error('target must be 1..15');state.target=n;state.collected.clear();state.queue=[];state.chip=null;state.mistakesThisRound=0;clearHint();buildFairQueue();spawn();updateUI();},
     resolveKeep:()=>resolve('keep'), resolveTrash:()=>resolve('trash'), requiredBits:required
   };
 
+  installFinishStyles();
   if(!makeUI())return;
   hookMode();
   document.addEventListener('keydown',keys,{passive:false});
