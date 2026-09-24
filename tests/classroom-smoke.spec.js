@@ -36,18 +36,32 @@ async function releaseByteTutorial(page) {
 
 async function releaseBotTutorialStep(page) {
   const modal = page.locator('#modal-tutorial');
-  if (!(await modal.count()) || !(await modal.isVisible())) return;
+  if (!(await modal.count())) return;
 
-  const skip = modal.getByRole('button', { name: 'Überspringen', exact: true });
-  if (await skip.count() && await skip.isVisible()) {
-    await skip.click();
-  } else {
-    const advance = modal.getByRole('button').filter({ hasText: /Weiter|Fertig|Los geht|Start/i }).first();
-    await expect(advance, 'Bot tutorial needs a visible continue control').toBeVisible();
-    await advance.click();
+  // Bot onboarding is also staged. A card can disappear and another tutorial
+  // card can be scheduled immediately afterwards, so a single "hidden" check
+  // is not enough. Only return after controls stay unobstructed briefly.
+  for (let step = 0; step < 8; step += 1) {
+    if (!(await modal.isVisible())) {
+      await page.waitForTimeout(220);
+      if (!(await modal.isVisible())) return;
+      continue;
+    }
+
+    const skip = modal.getByRole('button', { name: 'Überspringen', exact: true });
+    if (await skip.count() && await skip.isVisible()) {
+      await skip.click();
+    } else {
+      const advance = modal.getByRole('button').filter({ hasText: /Weiter|Fertig|Los geht|Start/i }).first();
+      await expect(advance, `Bot tutorial step ${step + 1} needs a visible continue control`).toBeVisible();
+      await advance.click();
+    }
+
+    await expect(modal, 'Bot tutorial card must release controls for the guided action').toBeHidden();
+    await page.waitForTimeout(220);
   }
 
-  await expect(modal, 'Bot tutorial card must release controls for the guided action').toBeHidden();
+  await expect(modal, 'Bot tutorial must leave the next pupil control unobstructed').toBeHidden();
 }
 
 test.describe('7th-grade classroom smoke · phone portrait', () => {
@@ -81,7 +95,7 @@ test.describe('7th-grade classroom smoke · phone portrait', () => {
     await expect(command, 'At least one beginner command must be tappable').toBeVisible();
     const commandBox = await command.boundingBox();
     expect(commandBox && commandBox.height).toBeGreaterThanOrEqual(44);
-    await command.click();
+    await command.click({ timeout: 5000 });
 
     await page.waitForTimeout(180);
     await releaseBotTutorialStep(page);
@@ -90,14 +104,14 @@ test.describe('7th-grade classroom smoke · phone portrait', () => {
     await expect(start).toBeVisible();
     const startBox = await start.boundingBox();
     expect(startBox && startBox.height).toBeGreaterThanOrEqual(44);
-    await start.click();
+    await start.click({ timeout: 5000 });
     await page.waitForTimeout(350);
 
     await releaseBotTutorialStep(page);
 
     const reset = page.getByRole('button', { name: 'Roboter zurücksetzen' });
     await expect(reset).toBeVisible();
-    await reset.click();
+    await reset.click({ timeout: 5000 });
 
     const toast = page.locator('#toast-alert');
     await page.evaluate(() => showToast('Classroom smoke message', 'info'));
