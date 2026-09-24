@@ -2,7 +2,7 @@
   const VISIBLE_MS = 6000;
   const FADE_MS = 260;
 
-  window.__IB_BOT_MESSAGE_ADDON_VERSION = '1.0.0';
+  window.__IB_BOT_MESSAGE_ADDON_VERSION = '1.0.1';
 
   const toast = document.getElementById('toast-alert');
   const missionCard = document.getElementById('mission-card');
@@ -92,13 +92,12 @@
       const newCycle = classActive && (!wasClassActive || friendly !== lastMessage);
 
       if (text && friendly !== raw) text.textContent = friendly;
-      toast.style.pointerEvents = 'none';
 
       if (!friendly) {
         clearTimeout(toastHideTimer);
         clearTimeout(toastCleanupTimer);
-        toast.classList.add('opacity-0');
-        toast.style.visibility = 'hidden';
+        if (!toast.classList.contains('opacity-0')) toast.classList.add('opacity-0');
+        if (toast.style.visibility !== 'hidden') toast.style.visibility = 'hidden';
         wasClassActive = false;
         lastMessage = friendly;
         return;
@@ -107,11 +106,11 @@
       if (newCycle) {
         clearTimeout(toastHideTimer);
         clearTimeout(toastCleanupTimer);
-        toast.style.visibility = 'visible';
+        if (toast.style.visibility !== 'visible') toast.style.visibility = 'visible';
         toastHideTimer = setTimeout(() => {
-          toast.classList.add('opacity-0');
+          if (!toast.classList.contains('opacity-0')) toast.classList.add('opacity-0');
           toastCleanupTimer = setTimeout(() => {
-            toast.style.visibility = 'hidden';
+            if (toast.style.visibility !== 'hidden') toast.style.visibility = 'hidden';
           }, FADE_MS);
         }, VISIBLE_MS);
       }
@@ -123,7 +122,7 @@
     const toastObserver = new MutationObserver(syncToast);
     toastObserver.observe(toast, {
       attributes: true,
-      attributeFilter: ['class', 'style'],
+      attributeFilter: ['class'],
       childList: true,
       characterData: true,
       subtree: true,
