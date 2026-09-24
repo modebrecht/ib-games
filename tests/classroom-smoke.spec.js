@@ -25,20 +25,24 @@ async function finishByteOnboarding(page) {
   await expect(modal, 'Byte onboarding must be completable without leaving the game').toBeHidden();
 }
 
-async function passBotOnboarding(page) {
-  const tutorialLabel = page.getByText(/Mini-Tutorial/i).first();
-  if (!(await tutorialLabel.count()) || !(await tutorialLabel.isVisible())) return;
+async function finishBotOnboarding(page) {
+  const modal = page.locator('#modal-tutorial');
+  if (!(await modal.count()) || !(await modal.isVisible())) return;
 
-  const next = page.getByRole('button', { name: 'Weiter', exact: true });
-  if (await next.count() && await next.isVisible()) {
-    await next.click();
+  for (let step = 0; step < 6 && await modal.isVisible(); step += 1) {
+    const preferred = modal.getByRole('button', { name: /Weiter|Fertig|Los geht|Start/i }).filter({ visible: true });
+    const skip = modal.getByRole('button', { name: 'Überspringen', exact: true });
+
+    if (await preferred.count() && await preferred.first().isVisible()) {
+      await preferred.first().click();
+    } else {
+      await expect(skip, `Bot onboarding step ${step + 1} needs a visible continue/skip control`).toBeVisible();
+      await skip.click();
+    }
     await page.waitForTimeout(120);
   }
 
-  const skipTutorial = page.getByRole('button', { name: 'Überspringen', exact: true });
-  await expect(skipTutorial, 'Bot onboarding must offer a clear escape route').toBeVisible();
-  await skipTutorial.click();
-  await expect(tutorialLabel).toBeHidden();
+  await expect(modal, 'Bot onboarding must fully release the gameplay controls').toBeHidden();
 }
 
 test.describe('7th-grade classroom smoke · phone portrait', () => {
@@ -52,7 +56,7 @@ test.describe('7th-grade classroom smoke · phone portrait', () => {
     await expect(page.locator('#game-canvas-shell')).toBeVisible();
     await expect(page.locator('#algorithm-panel')).toBeVisible();
     await expect(page.locator('#level-select')).toBeVisible();
-    await passBotOnboarding(page);
+    await finishBotOnboarding(page);
 
     const command = page.locator('.cmd-add-btn:visible').first();
     await expect(command, 'At least one beginner command must be tappable').toBeVisible();
