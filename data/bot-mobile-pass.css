@@ -1,0 +1,79 @@
+/* Final mobile hardening pass for Bot Labyrinth */
+#btn-skip-level { min-height: 44px; }
+#btn-undo, #btn-reset, #btn-clear { min-width: 40px; }
+
+@media (orientation: portrait) and (max-width: 767px) {
+  #algorithm-panel.debug-expanded { height: 20.5rem !important; }
+  #game-canvas-shell {
+    width: min(100%, max(10rem, calc(100dvh - 412px)));
+    max-width: min(100%, max(10rem, calc(100dvh - 412px)));
+    flex-shrink: 0;
+  }
+  .debug-layout #mission-card { display: none; }
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+  #level-select { min-height: 40px; }
+  .header-icon-btn:not(.hidden) {
+    min-width: 40px;
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #action-bar button { min-height: 44px; }
+  #mechanic-hint { display: none !important; }
+  #debug-tip { max-height: 5.25rem; }
+}
+
+@media (max-width: 420px) {
+  .header-icon-btn {
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+    align-items: center;
+    justify-content: center;
+  }
+  .header-icon-btn:not(.hidden) { display: inline-flex; }
+  #level-select { min-height: 2.5rem; }
+  #btn-editor-toggle { display: none !important; }
+}
+
+@media (max-width: 340px) {
+  #level-select {
+    width: 6.45rem;
+    max-width: 6.45rem;
+    font-size: 10px;
+  }
+  #header-controls { gap: .2rem; }
+  #btn-fullscreen { display: none !important; }
+}
+
+@media (orientation: portrait) and (max-height: 680px) {
+  #algorithm-panel.debug-expanded { height: 18rem !important; }
+  .debug-layout #mission-card { display: none; }
+  #game-hud { padding-top: .2rem; padding-bottom: .2rem; }
+  #mission-card { padding-top: .3rem; padding-bottom: .3rem; }
+  #mission-card > div { font-size: .5rem; }
+  #mission-text { font-size: .65rem; line-height: 1.15; }
+  #mechanic-hint { display: none !important; }
+  .debug-layout #game-canvas-shell {
+    width: min(100%, max(9.5rem, calc(100dvh - 413px)));
+    max-width: min(100%, max(9.5rem, calc(100dvh - 413px)));
+  }
+  #command-palette { padding: .35rem; }
+  #command-palette > p { display: none; }
+  .cmd-add-btn { min-height: 48px; padding: .3rem; }
+  #action-bar { padding: .35rem; }
+  #debug-tip {
+    margin-bottom: .2rem;
+    padding: .35rem .5rem;
+    font-size: 10px;
+    line-height: 1.2;
+  }
+  #btn-skip-level {
+    margin-top: .25rem;
+    padding-top: .3rem;
+    padding-bottom: .3rem;
+    min-height: 44px;
+  }
+}
