@@ -31,6 +31,9 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
+      - name: Diagnose Bot source
+        run: node scripts/inspect-bot-source.js
+
       - name: Run classroom smoke
         run: npm run test:classroom
 
