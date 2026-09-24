@@ -72,6 +72,10 @@ test.describe('7th-grade classroom smoke · phone portrait', () => {
     await page.goto('/bot-labyrinth.html');
     await waitForGame(page);
 
+    await expect.poll(() => page.evaluate(() => window.__IB_BOT_MESSAGE_ADDON_VERSION)).toBe('1.0.0');
+    await expect(page.locator('script[src="data/bot-message-addon.js"]')).toHaveCount(1);
+    await expect(page.locator('script[src="data/bot-toast-hotfix.js"]'), 'Legacy Bot monkeypatch must not be loaded').toHaveCount(0);
+
     await expect(page.locator('#game-canvas-shell')).toBeVisible();
     await expect(page.locator('#algorithm-panel')).toBeVisible();
     await expect(page.locator('#level-select')).toBeVisible();
