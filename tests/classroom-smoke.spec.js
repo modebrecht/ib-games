@@ -63,6 +63,16 @@ test.describe('7th-grade classroom smoke · phone portrait', () => {
     await expect(page.locator('#level-select')).toBeVisible();
     await expect(page.locator('#btn-skip-level'), 'Debug hint rewrites must preserve the level-skip control').toHaveCount(1);
 
+    const missionText = page.locator('#mission-text');
+    await expect(missionText, 'Mission text must remain readable on compact portrait screens').toBeVisible();
+    const missionFontSize = await missionText.evaluate(el => parseFloat(getComputedStyle(el).fontSize));
+    expect(missionFontSize, 'Mission text must not shrink below 12px').toBeGreaterThanOrEqual(12);
+
+    const missionLabel = page.locator('#mission-card > div').first();
+    await expect(missionLabel, 'Mission label/supporting copy should exist').toBeVisible();
+    const missionLabelFontSize = await missionLabel.evaluate(el => parseFloat(getComputedStyle(el).fontSize));
+    expect(missionLabelFontSize, 'Mission supporting text must not shrink below 11px').toBeGreaterThanOrEqual(11);
+
     // Bot onboarding is contextual: each card releases the pupil to perform
     // the requested action, then the next card appears after that action.
     await releaseBotTutorialStep(page);
