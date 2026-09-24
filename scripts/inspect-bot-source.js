@@ -8,9 +8,21 @@ const b64 = [1, 2, 3, 4, 5, 6]
 const source = zlib.gunzipSync(Buffer.from(b64, 'base64')).toString('utf8');
 const lines = source.split('\n');
 
-for (const [start, end] of [[1678, 1694], [2054, 2068]]) {
-  console.log(`\n--- Bot source ${start}-${end} ---`);
-  for (let line = start; line <= end; line += 1) {
-    console.log(`${line}: ${lines[line - 1] ?? ''}`);
+function showAround(match, before = 6, after = 24) {
+  const index = lines.findIndex(line => line.includes(match));
+  console.log(`\n--- ${match} @ source line ${index + 1} ---`);
+  for (let i = Math.max(0, index - before); i <= Math.min(lines.length - 1, index + after); i += 1) {
+    console.log(`${i + 1}: ${lines[i]}`);
   }
+}
+
+showAround('function executeForward', 4, 42);
+showAround("getElementById('btn-exit-debug')", 10, 18);
+
+const htmlIds = new Set([...source.matchAll(/\bid=["']([^"']+)["']/g)].map(m => m[1]));
+const listeners = [...source.matchAll(/document\.getElementById\(["']([^"']+)["']\)\.addEventListener/g)];
+console.log('\n--- direct getElementById(...).addEventListener checks ---');
+for (const match of listeners) {
+  const line = source.slice(0, match.index).split('\n').length;
+  console.log(`${line}: #${match[1]} html-id=${htmlIds.has(match[1]) ? 'present' : 'MISSING'}`);
 }
