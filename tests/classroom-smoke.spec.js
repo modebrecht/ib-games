@@ -191,3 +191,40 @@ test.describe('7th-grade classroom smoke · phone landscape', () => {
     expect(pageErrors, `Unexpected compact-landscape runtime errors:\n${pageErrors.join('\n---\n')}`).toEqual([]);
   });
 });
+
+test.describe('classroom loader resilience', () => {
+  test.use({ viewport: { width: 390, height: 680 }, isMobile: true, hasTouch: true });
+
+  test('Both games recover when the first chunk request fails once', async ({ page }) => {
+    let botAttempts = 0;
+    await page.route('**/data/bot-labyrinth-3.txt', async route => {
+      botAttempts += 1;
+      if (botAttempts === 1) {
+        await route.abort('failed');
+        return;
+      }
+      await route.continue();
+    });
+
+    await page.goto('/bot-labyrinth.html');
+    await waitForGame(page);
+    await expect(page.locator('#game-canvas-shell')).toBeVisible();
+    expect(botAttempts, 'Bot loader should retry a failed chunk').toBeGreaterThanOrEqual(2);
+    await page.unroute('**/data/bot-labyrinth-3.txt');
+
+    let byteAttempts = 0;
+    await page.route('**/data/byte-blaster-3.txt', async route => {
+      byteAttempts += 1;
+      if (byteAttempts === 1) {
+        await route.abort('failed');
+        return;
+      }
+      await route.continue();
+    });
+
+    await page.goto('/byte-blaster.html');
+    await waitForGame(page);
+    await expect(page.locator('#view-speedrun')).toBeVisible();
+    expect(byteAttempts, 'Byte loader should retry a failed chunk').toBeGreaterThanOrEqual(2);
+  });
+});
