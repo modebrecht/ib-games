@@ -31,9 +31,11 @@ test.describe('IB Games hub', () => {
     await expectNoHorizontalOverflow(page);
   });
 
-  test('phone portrait stacks cards without clipping', async ({ page }) => {
+  test('discovery offers start locked and phone layout does not clip', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 680 });
     await page.goto('/');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
 
     await expect(page.locator('.games')).toHaveCSS('grid-template-columns', /.+/);
     const cards = page.locator('.game-card');
@@ -43,12 +45,19 @@ test.describe('IB Games hub', () => {
     expect(first && first.width).toBeLessThanOrEqual(390);
     expect(second && second.width).toBeLessThanOrEqual(390);
 
-    await expect(page.getByRole('link', { name: /Quick, Draw!/ })).toHaveAttribute('target', '_blank');
-    await expect(page.getByRole('link', { name: /Google AI Quests/ })).toHaveAttribute('target', '_blank');
+    const discoveryCards = page.locator('.external-card');
+    await expect(discoveryCards).toHaveCount(2);
+    await expect(discoveryCards.nth(0)).toHaveClass(/is-locked/);
+    await expect(discoveryCards.nth(1)).toHaveClass(/is-locked/);
+    await expect(discoveryCards.nth(0)).toHaveAttribute('aria-disabled', 'true');
+    await expect(discoveryCards.nth(1)).toHaveAttribute('aria-disabled', 'true');
+    await expect(discoveryCards.nth(0)).not.toHaveAttribute('href', /.+/);
+    await expect(discoveryCards.nth(1)).not.toHaveAttribute('href', /.+/);
+    await expect(page.getByText('50 % zuerst erreichen')).toHaveCount(2);
     await expectNoHorizontalOverflow(page);
   });
 
-  test('50 percent mastery shows Geschafft only on first-party games', async ({ page }) => {
+  test('Bot reaching 50 percent permanently unlocks both discovery offers', async ({ page }) => {
     await page.goto('/');
     await page.evaluate(() => localStorage.clear());
 
@@ -58,23 +67,52 @@ test.describe('IB Games hub', () => {
       [0, 1, 2, 3, 4].forEach(index => window.__ibBotProgress.markSolved(index));
     });
     await expect.poll(() => page.evaluate(() => window.__ibBotProgress.read().percent)).toBeGreaterThanOrEqual(50);
+    await expect.poll(() => page.evaluate(() => localStorage.getItem('ib-games:unlock:more:v1'))).toBe('1');
+
+    await page.goto('/');
+    const botBadge = page.locator('.game-card[data-game="bot"] [data-mastered-badge]');
+    await expect(botBadge).toBeVisible();
+    await expect(botBadge).toContainText('Geschafft');
+
+    const discoveryCards = page.locator('.external-card');
+    await expect(discoveryCards.nth(0)).not.toHaveClass(/is-locked/);
+    await expect(discoveryCards.nth(1)).not.toHaveClass(/is-locked/);
+    await expect(discoveryCards.nth(0)).toHaveAttribute('href', 'https://quickdraw.withgoogle.com/');
+    await expect(discoveryCards.nth(1)).toHaveAttribute('href', 'https://research.google/ai-quests/intl/en_us');
+    await expect(discoveryCards.nth(0)).toHaveAttribute('target', '_blank');
+    await expect(discoveryCards.nth(1)).toHaveAttribute('target', '_blank');
+    await expect(page.locator('.external-lock:visible')).toHaveCount(0);
+
+    await page.evaluate(() => {
+      localStorage.removeItem('ib-games:progress:bot:v1');
+      localStorage.removeItem('ib-games:progress:byte:v1');
+    });
+    await page.reload();
+
+    await expect(page.locator('.external-card.is-locked')).toHaveCount(0);
+    await expect(discoveryCards.nth(0)).toHaveAttribute('href', 'https://quickdraw.withgoogle.com/');
+    await expect(discoveryCards.nth(1)).toHaveAttribute('href', 'https://research.google/ai-quests/intl/en_us');
+    await expectNoHorizontalOverflow(page);
+  });
+
+  test('Byte reaching 50 percent also unlocks discovery', async ({ page }) => {
+    await page.goto('/');
+    await page.evaluate(() => localStorage.clear());
 
     await page.goto('/byte-blaster.html');
     await page.waitForFunction(() => !!window.__ibByteProgress, null, { timeout: 15000 });
     await page.evaluate(() => {
-      document.getElementById('sr-streak-display').textContent = '3';
-      document.getElementById('drop-combo').textContent = 'x3';
+      window.__ibByteProgress.mark('speedrun');
+      window.__ibByteProgress.mark('drop');
     });
     await expect.poll(() => page.evaluate(() => window.__ibByteProgress.read().percent)).toBeGreaterThanOrEqual(50);
+    await expect.poll(() => page.evaluate(() => localStorage.getItem('ib-games:unlock:more:v1'))).toBe('1');
 
     await page.goto('/');
-    const botBadge = page.locator('.game-card[data-game="bot"] [data-mastered-badge]');
     const byteBadge = page.locator('.game-card[data-game="byte"] [data-mastered-badge]');
-    await expect(botBadge).toBeVisible();
     await expect(byteBadge).toBeVisible();
-    await expect(botBadge).toContainText('Geschafft');
     await expect(byteBadge).toContainText('Geschafft');
-    await expect(page.locator('.external-card [data-mastered-badge]')).toHaveCount(0);
+    await expect(page.locator('.external-card.is-locked')).toHaveCount(0);
     await expectNoHorizontalOverflow(page);
   });
 });

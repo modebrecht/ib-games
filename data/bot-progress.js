@@ -2,6 +2,7 @@
   'use strict';
 
   const KEY = 'ib-games:progress:bot:v1';
+  const MORE_UNLOCK_KEY = 'ib-games:unlock:more:v1';
 
   const read = () => {
     try {
@@ -22,7 +23,10 @@
     const unique = [...new Set(solved)].filter(index => index >= 0 && index < total).sort((a, b) => a - b);
     const percent = total > 0 ? Math.round((unique.length / total) * 100) : 0;
     const payload = { solved: unique, total, percent, mastered: percent >= 50 };
-    try { localStorage.setItem(KEY, JSON.stringify(payload)); } catch (_) {}
+    try {
+      localStorage.setItem(KEY, JSON.stringify(payload));
+      if (payload.mastered) localStorage.setItem(MORE_UNLOCK_KEY, '1');
+    } catch (_) {}
     return payload;
   };
 
