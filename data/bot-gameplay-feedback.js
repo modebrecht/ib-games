@@ -100,20 +100,37 @@
 
   function resetToLevelStart() {
     const reset = document.getElementById('btn-reset');
-    if (!reset || reset.disabled) return false;
-    reset.click();
-    return true;
+    if (reset && !reset.disabled) {
+      reset.click();
+      return true;
+    }
+    if (typeof resetBot === 'function') {
+      resetBot();
+      return true;
+    }
+    return false;
   }
 
-  function resetBeforeRetryIfNeeded() {
-    if (!retryNeedsReset) return;
+  function isFreshLevelStart() {
+    const start = AppState.startPos;
+    const bot = AppState.bot;
+    const atStart = !!start && !!bot &&
+      bot.x === start.x &&
+      bot.y === start.y &&
+      bot.dir === start.dir;
+    const noExecutedCommand = (AppState.stepIndex ?? -1) === -1;
+    const noCollectedData = (AppState.tokensCollected?.size ?? 0) === 0;
+    return atStart && noExecutedCommand && noCollectedData;
+  }
+
+  function prepareFullRunFromStart() {
+    // Classroom rule: a full run is deterministic. Any call that starts the
+    // algorithm while it is not currently running begins at command 1 from the
+    // level's original bot state. STEP remains the only way to continue from a
+    // partially executed state.
+    if (AppState.executing || AppState.commands?.length === 0) return;
     retryNeedsReset = false;
-    resetToLevelStart();
-  }
-
-  function playRequestsFreshRun() {
-    const label = (playLabel?.textContent || '').trim().toUpperCase();
-    return retryNeedsReset || label === 'NOCHMAL' || label === 'START' || label.startsWith('START ');
+    if (!isFreshLevelStart()) resetToLevelStart();
   }
 
   mapCurrentSpeed();
@@ -125,23 +142,10 @@
     });
   });
 
-  // Beginner rule: START / NOCHMAL always means "from the level start".
-  // Only an explicit resume state such as WEITER continues from the current bot
-  // position. Capture phase runs before the game's own play-button handler.
-  if (playButton) {
-    playButton.addEventListener('click', () => {
-      if (!playRequestsFreshRun()) return;
-      retryNeedsReset = false;
-      resetToLevelStart();
-    }, true);
-  }
-
   if (typeof startExecution === 'function') {
     const originalStartExecution = startExecution;
     startExecution = function(...args) {
-      // Programmatic retries do not pass through the play button, so keep this
-      // fallback for the NOCHMAL state.
-      resetBeforeRetryIfNeeded();
+      prepareFullRunFromStart();
       clearAttemptFeedback();
       mapCurrentSpeed();
       return originalStartExecution.apply(this, args);
