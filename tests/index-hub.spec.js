@@ -47,4 +47,30 @@ test.describe('IB Games hub', () => {
     await expect(page.getByRole('link', { name: /Google AI Quests/ })).toHaveAttribute('target', '_blank');
     await expectNoHorizontalOverflow(page);
   });
+
+  test('50 percent mastery shows Geschafft only on first-party games', async ({ page }) => {
+    await page.addInitScript(() => localStorage.clear());
+
+    await page.goto('/bot-labyrinth.html');
+    await page.waitForFunction(() => !!window.__ibBotProgress, null, { timeout: 15000 });
+    await page.evaluate(() => {
+      [0, 1, 2, 3, 4].forEach(index => window.__ibBotProgress.markSolved(index));
+    });
+    await expect.poll(() => page.evaluate(() => window.__ibBotProgress.read().percent)).toBeGreaterThanOrEqual(50);
+
+    await page.goto('/byte-blaster.html');
+    await page.waitForFunction(() => !!window.__ibByteProgress, null, { timeout: 15000 });
+    await page.evaluate(() => {
+      document.getElementById('sr-streak-display').textContent = '3';
+      document.getElementById('drop-combo').textContent = 'x3';
+    });
+    await expect.poll(() => page.evaluate(() => window.__ibByteProgress.read().percent)).toBeGreaterThanOrEqual(50);
+
+    await page.goto('/');
+    await expect(page.locator('.game-card[data-game="bot"] [data-mastered-badge]')).toBeVisible();
+    await expect(page.locator('.game-card[data-game="byte"] [data-mastered-badge]')).toBeVisible();
+    await expect(page.locator('.external-card [data-mastered-badge]')).toHaveCount(0);
+    await expect(page.getByText('Geschafft', { exact: true })).toHaveCount(2);
+    await expectNoHorizontalOverflow(page);
+  });
 });
