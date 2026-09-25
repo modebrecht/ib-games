@@ -68,10 +68,13 @@ test.describe('IB Games hub', () => {
     await expect.poll(() => page.evaluate(() => window.__ibByteProgress.read().percent)).toBeGreaterThanOrEqual(50);
 
     await page.goto('/');
-    await expect(page.locator('.game-card[data-game="bot"] [data-mastered-badge]')).toBeVisible();
-    await expect(page.locator('.game-card[data-game="byte"] [data-mastered-badge]')).toBeVisible();
+    const botBadge = page.locator('.game-card[data-game="bot"] [data-mastered-badge]');
+    const byteBadge = page.locator('.game-card[data-game="byte"] [data-mastered-badge]');
+    await expect(botBadge).toBeVisible();
+    await expect(byteBadge).toBeVisible();
+    await expect(botBadge).toContainText('Geschafft');
+    await expect(byteBadge).toContainText('Geschafft');
     await expect(page.locator('.external-card [data-mastered-badge]')).toHaveCount(0);
-    await expect(page.getByText('Geschafft', { exact: true })).toHaveCount(2);
     await expectNoHorizontalOverflow(page);
   });
 });
