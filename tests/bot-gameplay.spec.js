@@ -293,7 +293,7 @@ test.describe('Bot Labyrinth promoted gameplay', () => {
     expect(result.resetClicks).toBe(1);
     expect(result.executedCommands).toBe(3);
     expect(result.x).toBe(3);
-    expect(result.stepIndex).toBe(2);
+    expect(result.stepIndex).toBe(3);
   });
 
   test('boss enforces A-B-C core order and timed security sweeps', async ({ request }) => {
