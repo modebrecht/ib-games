@@ -11,20 +11,34 @@ async function expectNoHorizontalOverflow(page) {
 }
 
 test.describe('IB Games hub', () => {
-  test('desktop keeps first-party games primary and keyboard accessible', async ({ page }) => {
+  test('desktop presents all four offers as equal game cards and opens playable links in new tabs', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto('/');
 
     await expect(page.getByRole('heading', { level: 1, name: 'Lernen durch Spielen.' })).toBeVisible();
-    await expect(page.getByRole('link', { name: /Bot-Labyrinth/ })).toHaveAttribute('href', 'bot-labyrinth.html');
-    await expect(page.getByRole('link', { name: /Byte Blaster/ })).toHaveAttribute('href', 'byte-blaster.html');
+
+    const bot = page.getByRole('link', { name: /Bot-Labyrinth/ });
+    const byte = page.getByRole('link', { name: /Byte Blaster/ });
+    await expect(bot).toHaveAttribute('href', 'bot-labyrinth.html');
+    await expect(byte).toHaveAttribute('href', 'byte-blaster.html');
+    await expect(bot).toHaveAttribute('target', '_blank');
+    await expect(byte).toHaveAttribute('target', '_blank');
+    await expect(bot).toHaveAttribute('rel', /noopener/);
+    await expect(byte).toHaveAttribute('rel', /noopener/);
     await expect(page.getByRole('heading', { level: 2, name: 'Weitere Lernangebote' })).toBeVisible();
 
     const cards = page.locator('.game-card');
-    await expect(cards).toHaveCount(2);
+    await expect(cards).toHaveCount(4);
+    await expect(page.locator('.external-card')).toHaveCount(2);
+    await expect(page.locator('.external-card.game-card')).toHaveCount(2);
+
     const first = await cards.nth(0).boundingBox();
     const second = await cards.nth(1).boundingBox();
+    const third = await cards.nth(2).boundingBox();
+    const fourth = await cards.nth(3).boundingBox();
     expect(first && second && Math.abs(first.y - second.y)).toBeLessThan(3);
+    expect(third && fourth && Math.abs(third.y - fourth.y)).toBeLessThan(3);
+    expect(first && third && Math.abs(first.width - third.width)).toBeLessThan(3);
 
     await page.keyboard.press('Tab');
     await expect(page.locator('a.game-card').first()).toBeFocused();
@@ -39,14 +53,21 @@ test.describe('IB Games hub', () => {
 
     await expect(page.locator('.games')).toHaveCSS('grid-template-columns', /.+/);
     const cards = page.locator('.game-card');
-    const first = await cards.nth(0).boundingBox();
-    const second = await cards.nth(1).boundingBox();
-    expect(first && second && second.y).toBeGreaterThan((first && first.y) || 0);
-    expect(first && first.width).toBeLessThanOrEqual(390);
-    expect(second && second.width).toBeLessThanOrEqual(390);
+    await expect(cards).toHaveCount(4);
+
+    for (let index = 0; index < 4; index += 1) {
+      const box = await cards.nth(index).boundingBox();
+      expect(box && box.width).toBeLessThanOrEqual(390);
+      if (index > 0) {
+        const previous = await cards.nth(index - 1).boundingBox();
+        expect(box && previous && box.y).toBeGreaterThan(previous.y);
+      }
+    }
 
     const discoveryCards = page.locator('.external-card');
     await expect(discoveryCards).toHaveCount(2);
+    await expect(discoveryCards.nth(0)).toHaveClass(/game-card/);
+    await expect(discoveryCards.nth(1)).toHaveClass(/game-card/);
     await expect(discoveryCards.nth(0)).toHaveClass(/is-locked/);
     await expect(discoveryCards.nth(1)).toHaveClass(/is-locked/);
     await expect(discoveryCards.nth(0)).toHaveAttribute('aria-disabled', 'true');
@@ -81,6 +102,8 @@ test.describe('IB Games hub', () => {
     await expect(discoveryCards.nth(1)).toHaveAttribute('href', 'https://research.google/ai-quests/intl/en_us');
     await expect(discoveryCards.nth(0)).toHaveAttribute('target', '_blank');
     await expect(discoveryCards.nth(1)).toHaveAttribute('target', '_blank');
+    await expect(discoveryCards.nth(0)).toHaveAttribute('rel', /noopener/);
+    await expect(discoveryCards.nth(1)).toHaveAttribute('rel', /noopener/);
     await expect(page.locator('.external-lock:visible')).toHaveCount(0);
 
     await page.evaluate(() => {

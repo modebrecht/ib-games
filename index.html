@@ -61,7 +61,7 @@
     .section-kicker{margin:0 0 5px;color:var(--cyan);font:800 .68rem ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.13em;text-transform:uppercase}
     .section-head h2{margin:0;font-size:clamp(1.55rem,3vw,2rem);letter-spacing:-.025em}
     .section-note{color:var(--muted-2);font-size:.8rem;text-align:right}
-    .games{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-bottom:52px}
+    .games,.external-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-bottom:52px}
     .game-card{
       --accent:var(--cyan);
       --accent-soft:var(--cyan-soft);
@@ -78,12 +78,15 @@
       background:linear-gradient(145deg,rgba(17,28,48,.96),rgba(7,12,23,.98));
       box-shadow:var(--shadow);
       isolation:isolate;
-      transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;
+      transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease,opacity .18s ease;
     }
     .game-card::before{content:"";position:absolute;z-index:-2;width:300px;height:300px;right:-100px;top:-120px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--accent) 22%,transparent),transparent 67%);opacity:.9}
     .game-card::after{content:"";position:absolute;z-index:-1;inset:auto 0 0;height:45%;background:linear-gradient(180deg,transparent,color-mix(in srgb,var(--accent) 4%,transparent));pointer-events:none}
     .game-card.byte{--accent:var(--green);--accent-soft:var(--green-soft)}
+    .external-card{--accent:var(--violet);--accent-soft:#d8ceff}
+    .external-card.amber{--accent:var(--amber);--accent-soft:#fde68a}
     .game-card.is-mastered{border-color:color-mix(in srgb,var(--accent) 48%,var(--line));box-shadow:var(--shadow),0 0 34px color-mix(in srgb,var(--accent) 8%,transparent)}
+    .external-card.is-locked{cursor:not-allowed;opacity:.58;border-style:dashed;box-shadow:none}
     .game-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:24px}
     .step{display:inline-flex;align-items:center;gap:8px;padding:6px 9px 6px 7px;border:1px solid color-mix(in srgb,var(--accent) 25%,transparent);border-radius:999px;background:color-mix(in srgb,var(--accent) 8%,transparent);color:var(--accent-soft);font:800 .68rem ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.07em;text-transform:uppercase}
     .step b{display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--accent);color:#04242a;font-size:.67rem}
@@ -91,6 +94,8 @@
     .difficulty{color:var(--muted-2);font-size:.72rem;font-weight:750;text-align:right}
     .mastered-badge{display:inline-flex;align-items:center;gap:5px;padding:5px 8px;border:1px solid color-mix(in srgb,var(--accent) 42%,transparent);border-radius:999px;background:color-mix(in srgb,var(--accent) 11%,#07111f);color:var(--accent-soft);font:900 .66rem ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.065em;text-transform:uppercase;white-space:nowrap}
     .mastered-badge[hidden]{display:none}
+    .external-lock{display:inline-flex;align-items:center;gap:6px;padding:5px 8px;border:1px solid rgba(183,195,210,.28);border-radius:999px;background:rgba(183,195,210,.07);color:#c8d2df;font:850 .64rem ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.035em;text-transform:uppercase;white-space:nowrap}
+    .external-lock svg{width:13px;height:13px;flex:none}.external-lock[hidden]{display:none}
     .game-visual{height:142px;display:grid;place-items:center;margin:0 -4px 22px;border:1px solid rgba(255,255,255,.045);border-radius:22px;background:linear-gradient(145deg,rgba(4,10,20,.68),rgba(8,16,30,.42));overflow:hidden}
     .game-visual svg{width:min(92%,350px);height:118px;color:var(--accent)}
     .tag{width:max-content;max-width:100%;margin-bottom:9px;color:var(--accent);font:850 .69rem ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.1em;text-transform:uppercase}
@@ -98,30 +103,18 @@
     .desc{color:var(--muted);line-height:1.56;margin:0 0 24px;max-width:48ch}
     .go{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:auto;padding-top:17px;border-top:1px solid rgba(255,255,255,.07);font-weight:850;color:var(--accent-soft)}
     .go svg{width:20px;height:20px;transition:transform .2s ease}
-    .external-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-    .external-card{--accent:var(--violet);display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:16px;min-height:120px;padding:18px 19px;border:1px solid var(--line);border-radius:20px;background:rgba(11,18,33,.74);text-decoration:none;color:inherit;transition:transform .18s ease,border-color .18s ease,background .18s ease,opacity .18s ease}
-    .external-card.amber{--accent:var(--amber)}
-    .external-card.is-locked{cursor:not-allowed;opacity:.58;border-style:dashed;background:rgba(8,13,24,.72)}
-    .external-card.is-locked .external-arrow{display:none}
-    .ext-icon{width:52px;height:52px;display:grid;place-items:center;border-radius:15px;background:color-mix(in srgb,var(--accent) 10%,transparent);border:1px solid color-mix(in srgb,var(--accent) 24%,transparent);color:var(--accent)}
-    .ext-icon svg{width:27px;height:27px}
-    .external-card small{display:block;color:var(--accent);font:800 .65rem ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.09em;text-transform:uppercase;margin-bottom:5px}
-    .external-card h3{margin:0 0 3px;font-size:1.05rem}.external-card p{margin:0;color:var(--muted);font-size:.82rem;line-height:1.43}.external-arrow{color:var(--muted-2)}.external-arrow svg{width:19px;height:19px}
-    .external-lock{display:inline-flex;align-items:center;gap:6px;margin-top:8px;color:#b7c3d2;font:850 .66rem ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.035em;text-transform:uppercase}
-    .external-lock svg{width:13px;height:13px;flex:none}.external-lock[hidden]{display:none}
     footer{display:flex;justify-content:space-between;gap:18px;margin-top:38px;padding-top:19px;border-top:1px solid rgba(255,255,255,.06);color:#63738a;font-size:.76rem}
     @media(hover:hover){
-      .game-card:hover{transform:translateY(-5px);border-color:color-mix(in srgb,var(--accent) 46%,var(--line));box-shadow:0 34px 90px rgba(0,0,0,.4),0 0 40px color-mix(in srgb,var(--accent) 7%,transparent)}
-      .game-card:hover .go svg{transform:translateX(4px)}
-      .external-card:not(.is-locked):hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--accent) 38%,var(--line));background:rgba(15,24,42,.92)}
+      .game-card:not(.is-locked):hover{transform:translateY(-5px);border-color:color-mix(in srgb,var(--accent) 46%,var(--line));box-shadow:0 34px 90px rgba(0,0,0,.4),0 0 40px color-mix(in srgb,var(--accent) 7%,transparent)}
+      .game-card:not(.is-locked):hover .go svg{transform:translateX(4px)}
     }
     @media(max-width:820px){
-      .hero{grid-template-columns:1fr;gap:23px}.hero-panel{max-width:560px}.games{grid-template-columns:1fr}.game-card{min-height:390px}.external-grid{grid-template-columns:1fr}
+      .hero{grid-template-columns:1fr;gap:23px}.hero-panel{max-width:560px}.games,.external-grid{grid-template-columns:1fr}.game-card{min-height:390px}
     }
     @media(max-width:560px){
-      .shell{width:min(100% - 22px,1120px);padding-top:15px}.topbar{margin-bottom:38px}.status span:last-child{display:none}h1{font-size:clamp(3.15rem,18vw,4.5rem)}.lead{font-size:.98rem}.hero{margin-bottom:48px}.section-head{align-items:start}.section-note{display:none}.game-card{min-height:370px;border-radius:23px;padding:20px}.game-visual{height:125px;margin-bottom:18px}.game-visual svg{height:104px}.external-card{grid-template-columns:auto 1fr;padding:15px}.external-card p{font-size:.78rem}.external-arrow{display:none}footer{flex-direction:column;gap:5px}
+      .shell{width:min(100% - 22px,1120px);padding-top:15px}.topbar{margin-bottom:38px}.status span:last-child{display:none}h1{font-size:clamp(3.15rem,18vw,4.5rem)}.lead{font-size:.98rem}.hero{margin-bottom:48px}.section-head{align-items:start}.section-note{display:none}.game-card{min-height:370px;border-radius:23px;padding:20px}.game-visual{height:125px;margin-bottom:18px}.game-visual svg{height:104px}footer{flex-direction:column;gap:5px}
     }
-    @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}.game-card,.external-card,.go svg{transition:none!important}}
+    @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}.game-card,.go svg{transition:none!important}}
   </style>
 </head>
 <body>
@@ -158,7 +151,7 @@
       </div>
 
       <div class="games">
-        <a class="game-card" data-game="bot" href="bot-labyrinth.html">
+        <a class="game-card" data-game="bot" href="bot-labyrinth.html" target="_blank" rel="noopener noreferrer">
           <div class="game-top">
             <span class="step"><b>1</b> Start hier</span>
             <span class="game-meta">
@@ -183,7 +176,7 @@
           </span>
         </a>
 
-        <a class="game-card byte" data-game="byte" href="byte-blaster.html">
+        <a class="game-card byte" data-game="byte" href="byte-blaster.html" target="_blank" rel="noopener noreferrer">
           <div class="game-top">
             <span class="step"><b>2</b> Danach</span>
             <span class="game-meta">
@@ -216,19 +209,54 @@
         <div class="section-note" data-discover-note>Ab 50 % in einem eigenen Spiel</div>
       </div>
       <div class="external-grid">
-        <a class="external-card is-locked" data-unlock-url="https://quickdraw.withgoogle.com/" aria-disabled="true" tabindex="-1">
-          <span class="ext-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m4 20 4.2-1 10.9-10.9a2.1 2.1 0 0 0-3-3L5.2 16 4 20Z"/><path d="m14.7 6.5 3 3M4 20h5"/></svg>
+        <a class="game-card external-card is-locked" data-unlock-url="https://quickdraw.withgoogle.com/" aria-disabled="true" tabindex="-1">
+          <div class="game-top">
+            <span class="step"><b>3</b> KI ausprobieren</span>
+            <span class="game-meta">
+              <span class="difficulty">Bilderkennung</span>
+              <span class="external-lock" data-lock-state><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>50 % zuerst erreichen</span>
+            </span>
+          </div>
+          <div class="game-visual" aria-hidden="true">
+            <svg viewBox="0 0 360 120" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+              <g opacity=".15" stroke-width="1"><path d="M24 24H336M24 60H336M24 96H336M72 14V106M144 14V106M216 14V106M288 14V106"/></g>
+              <path d="M87 83c18-36 39-52 66-46 19 4 28 20 47 24 17 4 31-3 48-23" stroke-width="5" opacity=".25"/>
+              <path d="M87 83c18-36 39-52 66-46 19 4 28 20 47 24 17 4 31-3 48-23" stroke-width="2.8"/>
+              <path d="m247 36 26-19 9 11-25 20-18 3 8-15Z" fill="#07111f" stroke-width="2.4"/>
+              <circle cx="75" cy="86" r="15" fill="currentColor" opacity=".12" stroke="none"/><path d="M69 86h12m-6-6v12" stroke-width="2.5"/>
+            </svg>
+          </div>
+          <div class="tag">KI · Bilderkennung</div>
+          <h3>Quick, Draw!</h3>
+          <p class="desc">Zeichne Begriffe und beobachte, was die KI darin erkennt.</p>
+          <span class="go">Spiel öffnen
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
           </span>
-          <span><small>KI · Bilderkennung</small><h3>Quick, Draw!</h3><p>Zeichne Begriffe und beobachte, was die KI darin erkennt.</p><span class="external-lock" data-lock-state><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>50 % zuerst erreichen</span></span>
-          <span class="external-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 16 16 8M9 8h7v7"/></svg></span>
         </a>
-        <a class="external-card amber is-locked" data-unlock-url="https://research.google/ai-quests/intl/en_us" aria-disabled="true" tabindex="-1">
-          <span class="ext-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 5.5A3.5 3.5 0 0 0 6 9v1a3 3 0 0 0 0 6v.5A3.5 3.5 0 0 0 9.5 20c1 0 1.9-.4 2.5-1.1.6.7 1.5 1.1 2.5 1.1a3.5 3.5 0 0 0 3.5-3.5V16a3 3 0 0 0 0-6V9a3.5 3.5 0 0 0-3.5-3.5c-1 0-1.9.4-2.5 1.1-.6-.7-1.5-1.1-2.5-1.1Z"/><path d="M12 6.6v12.3M8.5 10.5H12m0 3h3.5"/></svg>
+
+        <a class="game-card external-card amber is-locked" data-unlock-url="https://research.google/ai-quests/intl/en_us" aria-disabled="true" tabindex="-1">
+          <div class="game-top">
+            <span class="step"><b>4</b> Weiter</span>
+            <span class="game-meta">
+              <span class="difficulty">KI · Interaktiv</span>
+              <span class="external-lock" data-lock-state><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>50 % zuerst erreichen</span>
+            </span>
+          </div>
+          <div class="game-visual" aria-hidden="true">
+            <svg viewBox="0 0 360 120" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+              <g opacity=".15" stroke-width="1"><path d="M28 24H332M28 60H332M28 96H332"/></g>
+              <path d="M118 37a24 24 0 0 0-24 24v5a20 20 0 0 0 0 40h4a24 24 0 0 0 20 11c9 0 17-5 22-12 5 7 13 12 22 12a24 24 0 0 0 20-11h4a20 20 0 0 0 0-40v-5a24 24 0 0 0-24-24c-9 0-17 5-22 12-5-7-13-12-22-12Z" transform="translate(40 -16) scale(.85)" fill="#07111f" stroke-width="2.5"/>
+              <path d="M159 38v49M141 53h18m0 18h19" stroke-width="3"/>
+              <path d="M235 78h43" stroke-width="3"/><path d="m272 70 10 8-10 8" stroke-width="3"/>
+              <rect x="289" y="53" width="42" height="50" rx="12" fill="#07111f" stroke-width="2.5"/><path d="M301 69h18m-18 10h18m-18 10h10" stroke-width="2.4"/>
+            </svg>
+          </div>
+          <div class="tag">KI · Interaktiv</div>
+          <h3>Google AI Quests</h3>
+          <p class="desc">Entdecke KI-Konzepte in interaktiven Herausforderungen.</p>
+          <span class="go">Spiel öffnen
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
           </span>
-          <span><small>KI · Interaktiv</small><h3>Google AI Quests</h3><p>Entdecke KI-Konzepte in interaktiven Herausforderungen.</p><span class="external-lock" data-lock-state><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>50 % zuerst erreichen</span></span>
-          <span class="external-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 16 16 8M9 8h7v7"/></svg></span>
         </a>
       </div>
     </section>
