@@ -2,6 +2,7 @@
   'use strict';
 
   const KEY = 'ib-games:progress:byte:v1';
+  const MORE_UNLOCK_KEY = 'ib-games:unlock:more:v1';
   const MODULES = ['speedrun', 'drop', 'ascii', 'matrix'];
   const REQUIRED_SIGNALS = 3;
 
@@ -35,7 +36,10 @@
       percent,
       mastered: percent >= 50,
     };
-    try { localStorage.setItem(KEY, JSON.stringify(payload)); } catch (_) {}
+    try {
+      localStorage.setItem(KEY, JSON.stringify(payload));
+      if (payload.mastered) localStorage.setItem(MORE_UNLOCK_KEY, '1');
+    } catch (_) {}
     return payload;
   };
 
