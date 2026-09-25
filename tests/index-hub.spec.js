@@ -49,7 +49,8 @@ test.describe('IB Games hub', () => {
   });
 
   test('50 percent mastery shows Geschafft only on first-party games', async ({ page }) => {
-    await page.addInitScript(() => localStorage.clear());
+    await page.goto('/');
+    await page.evaluate(() => localStorage.clear());
 
     await page.goto('/bot-labyrinth.html');
     await page.waitForFunction(() => !!window.__ibBotProgress, null, { timeout: 15000 });
