@@ -97,9 +97,73 @@ test.describe('Bot Labyrinth promoted gameplay', () => {
     const response = await request.get('/data/bot-gameplay-core.js');
     expect(response.ok()).toBeTruthy();
     const source = await response.text();
-    expect(source).toContain('if (atGoal && allTokens)');
+    expect(source).toContain('goalIsComplete');
     expect(source).toContain('stopExecution');
     expect(source).toContain('checkGoalCondition');
+  });
+
+  test('reaching the goal ends immediately even when the base step returns undefined', async ({ page }) => {
+    const result = await page.evaluate(async () => {
+      const source = await fetch('/data/bot-gameplay-core.js').then(response => response.text());
+      const frame = document.createElement('iframe');
+      document.body.appendChild(frame);
+      const w = frame.contentWindow;
+
+      w.AppState = {
+        bot: { x: 0, y: 0 },
+        goalPos: { x: 1, y: 0 },
+        tokensCollected: new Set(),
+        tokensTotal: 0,
+        status: 'RUNNING',
+      };
+      w.stepCalls = 0;
+      w.goalChecks = 0;
+      w.stopCalls = 0;
+
+      w.executeNextStep = function() {
+        w.stepCalls += 1;
+        if (w.stepCalls === 1) {
+          w.AppState.bot.x = 1;
+          setTimeout(() => w.executeNextStep(), 0);
+        } else {
+          w.AppState.bot.x = 2;
+        }
+        // Important regression condition: the real base function is not required
+        // to return true, so the goal wrapper must not depend on truthiness.
+        return undefined;
+      };
+
+      w.checkGoalCondition = function() {
+        w.goalChecks += 1;
+        if (w.AppState.bot.x === w.AppState.goalPos.x && w.AppState.bot.y === w.AppState.goalPos.y) {
+          w.AppState.status = 'WON';
+        }
+      };
+
+      w.stopExecution = function() {
+        w.stopCalls += 1;
+      };
+
+      w.eval(source);
+      w.executeNextStep();
+      await new Promise(resolve => setTimeout(resolve, 30));
+
+      const snapshot = {
+        status: w.AppState.status,
+        x: w.AppState.bot.x,
+        stepCalls: w.stepCalls,
+        goalChecks: w.goalChecks,
+        stopCalls: w.stopCalls,
+      };
+      frame.remove();
+      return snapshot;
+    });
+
+    expect(result.status).toBe('WON');
+    expect(result.x).toBe(1);
+    expect(result.stepCalls).toBe(1);
+    expect(result.goalChecks).toBe(1);
+    expect(result.stopCalls).toBe(1);
   });
 
   test('boss enforces A-B-C core order and timed security sweeps', async ({ request }) => {
