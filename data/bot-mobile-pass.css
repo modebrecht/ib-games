@@ -4,7 +4,7 @@
 
 /* Desktop: the feedback message is docked into the algorithm column, so the
    playfield can use the vertical space it used to lose to the toast row. */
-@media (min-width: 768px) {
+@media (min-width: 900px) and (min-height: 500px) {
   #game-canvas-shell {
     width: min(100%, 36rem, calc(100dvh - 9.25rem)) !important;
     max-width: min(100%, 36rem, calc(100dvh - 9.25rem)) !important;
@@ -19,7 +19,7 @@
 
 /* Short desktop / laptop screens need a little more headroom for the right
    controls while still keeping the map substantially larger than before. */
-@media (min-width: 768px) and (max-height: 650px) {
+@media (min-width: 900px) and (min-height: 500px) and (max-height: 650px) {
   #game-canvas-shell {
     width: min(100%, 32rem, calc(100dvh - 8.75rem)) !important;
     max-width: min(100%, 32rem, calc(100dvh - 8.75rem)) !important;
