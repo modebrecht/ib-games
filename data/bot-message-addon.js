@@ -58,7 +58,7 @@
     }
     #toast-alert.opacity-0 { transform: none !important; }
 
-    @media (min-width: 768px) {
+    @media (min-width: 900px) and (min-height: 500px) {
       #coach-message-slot.coach-desktop-docked {
         width: calc(100% - 1rem) !important;
         max-width: none !important;
@@ -101,7 +101,7 @@
     slot.appendChild(toast);
   }
 
-  const desktopQuery = window.matchMedia('(min-width: 768px)');
+  const desktopQuery = window.matchMedia('(min-width: 900px) and (min-height: 500px)');
 
   function placeCoachSlot() {
     if (!slot || !missionCard) return;
