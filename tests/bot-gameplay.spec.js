@@ -178,7 +178,16 @@ test.describe('Bot Labyrinth promoted gameplay', () => {
         <button id="btn-reset">RESET</button>
       `;
 
-      w.AppState = { speedMs: 230, stepIndex: 4, tokensCollected: new Set(), status: 'CRASHED' };
+      w.AppState = {
+        speedMs: 230,
+        commands: [{ type: 'FORWARD' }],
+        startPos: { x: 0, y: 0, dir: 1 },
+        bot: { x: 1, y: 0, dir: 1 },
+        stepIndex: 4,
+        tokensCollected: new Set(),
+        status: 'CRASHED',
+        executing: false,
+      };
       w.startCalls = 0;
       w.resetClicks = 0;
       w.stepSeenByStart = null;
@@ -193,6 +202,7 @@ test.describe('Bot Labyrinth promoted gameplay', () => {
 
       doc.getElementById('btn-reset').addEventListener('click', () => {
         w.resetClicks += 1;
+        w.AppState.bot = { ...w.AppState.startPos };
         w.AppState.stepIndex = -1;
         w.AppState.status = 'IDLE';
       });
@@ -216,6 +226,74 @@ test.describe('Bot Labyrinth promoted gameplay', () => {
     expect(result.resetClicks).toBe(1);
     expect(result.startCalls).toBe(1);
     expect(result.stepSeenByStart).toBe(-1);
+  });
+
+  test('full run restarts at command 1 after a partial step instead of skipping the first command', async ({ page }) => {
+    const result = await page.evaluate(async () => {
+      const source = await fetch('/data/bot-gameplay-feedback.js').then(response => response.text());
+      const frame = document.createElement('iframe');
+      document.body.appendChild(frame);
+      const doc = frame.contentDocument;
+      const w = frame.contentWindow;
+
+      doc.body.innerHTML = `
+        <div id="game-canvas-shell"></div>
+        <button id="btn-play"><span id="btn-play-label">START</span></button>
+        <button id="btn-reset">RESET</button>
+      `;
+
+      w.AppState = {
+        speedMs: 230,
+        commands: [{ type: 'FORWARD' }, { type: 'FORWARD' }, { type: 'FORWARD' }],
+        startPos: { x: 0, y: 0, dir: 1 },
+        bot: { x: 0, y: 0, dir: 1 },
+        // Reproduce the real failure: the bot can still look like it is at the
+        // start while command 1 is already marked as executed.
+        stepIndex: 0,
+        tokensCollected: new Set(),
+        status: 'IDLE',
+        executing: false,
+      };
+      w.resetClicks = 0;
+      w.executedCommands = 0;
+      w.startExecution = function() {
+        while (++w.AppState.stepIndex < w.AppState.commands.length) {
+          if (w.AppState.commands[w.AppState.stepIndex].type === 'FORWARD') {
+            w.AppState.bot.x += 1;
+            w.executedCommands += 1;
+          }
+        }
+      };
+      w.handleCrash = function() {};
+      w.checkGoalCondition = function() {};
+      w.executeScan = function() {};
+      w.activateWarpIfPresent = function() { return false; };
+
+      doc.getElementById('btn-reset').addEventListener('click', () => {
+        w.resetClicks += 1;
+        w.AppState.bot = { ...w.AppState.startPos };
+        w.AppState.stepIndex = -1;
+        w.AppState.tokensCollected.clear();
+        w.AppState.status = 'IDLE';
+      });
+
+      w.eval(source);
+      w.startExecution();
+
+      const snapshot = {
+        resetClicks: w.resetClicks,
+        executedCommands: w.executedCommands,
+        x: w.AppState.bot.x,
+        stepIndex: w.AppState.stepIndex,
+      };
+      frame.remove();
+      return snapshot;
+    });
+
+    expect(result.resetClicks).toBe(1);
+    expect(result.executedCommands).toBe(3);
+    expect(result.x).toBe(3);
+    expect(result.stepIndex).toBe(2);
   });
 
   test('boss enforces A-B-C core order and timed security sweeps', async ({ request }) => {
