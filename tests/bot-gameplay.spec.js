@@ -128,8 +128,6 @@ test.describe('Bot Labyrinth promoted gameplay', () => {
         } else {
           w.AppState.bot.x = 2;
         }
-        // Important regression condition: the real base function is not required
-        // to return true, so the goal wrapper must not depend on truthiness.
         return undefined;
       };
 
@@ -166,6 +164,60 @@ test.describe('Bot Labyrinth promoted gameplay', () => {
     expect(result.stopCalls).toBe(1);
   });
 
+  test('NOCHMAL resets through the native reset control before rerunning', async ({ page }) => {
+    const result = await page.evaluate(async () => {
+      const source = await fetch('/data/bot-gameplay-feedback.js').then(response => response.text());
+      const frame = document.createElement('iframe');
+      document.body.appendChild(frame);
+      const doc = frame.contentDocument;
+      const w = frame.contentWindow;
+
+      doc.body.innerHTML = `
+        <div id="game-canvas-shell"></div>
+        <button id="btn-play"><span id="btn-play-label">START</span></button>
+        <button id="btn-reset">RESET</button>
+      `;
+
+      w.AppState = { speedMs: 230, stepIndex: 4, tokensCollected: new Set(), status: 'CRASHED' };
+      w.startCalls = 0;
+      w.resetClicks = 0;
+      w.stepSeenByStart = null;
+      w.startExecution = function() {
+        w.startCalls += 1;
+        w.stepSeenByStart = w.AppState.stepIndex;
+      };
+      w.handleCrash = function() {};
+      w.checkGoalCondition = function() {};
+      w.executeScan = function() {};
+      w.activateWarpIfPresent = function() { return false; };
+
+      doc.getElementById('btn-reset').addEventListener('click', () => {
+        w.resetClicks += 1;
+        w.AppState.stepIndex = -1;
+        w.AppState.status = 'IDLE';
+      });
+
+      w.eval(source);
+      w.handleCrash('test');
+      const retryLabel = doc.getElementById('btn-play-label').textContent;
+      w.startExecution();
+
+      const snapshot = {
+        retryLabel,
+        resetClicks: w.resetClicks,
+        startCalls: w.startCalls,
+        stepSeenByStart: w.stepSeenByStart,
+      };
+      frame.remove();
+      return snapshot;
+    });
+
+    expect(result.retryLabel).toBe('NOCHMAL');
+    expect(result.resetClicks).toBe(1);
+    expect(result.startCalls).toBe(1);
+    expect(result.stepSeenByStart).toBe(-1);
+  });
+
   test('boss enforces A-B-C core order and timed security sweeps', async ({ request }) => {
     const response = await request.get('/data/bot-gameplay-boss.js');
     expect(response.ok()).toBeTruthy();
@@ -175,5 +227,27 @@ test.describe('Bot Labyrinth promoted gameplay', () => {
     expect(source).toContain("id: 'C'");
     expect(source).toContain('Security-Sweep ist AN');
     expect(source).toContain('sweepActive');
+  });
+});
+
+test.describe('Bot Labyrinth desktop layout', () => {
+  test.use({ viewport: { width: 1024, height: 576 } });
+
+  test('desktop feedback docks in the algorithm column and frees room for a larger map', async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('cybercode.tutorialDone', 'true');
+    });
+    await page.goto('/bot-labyrinth.html?teacher=1');
+    await waitForGame(page);
+
+    await expect.poll(() => page.evaluate(() => window.__IB_BOT_MESSAGE_ADDON_VERSION)).toBe('1.1.0');
+
+    const slot = page.locator('#coach-message-slot');
+    await expect(slot).toHaveClass(/coach-desktop-docked/);
+    await expect(slot.locator('xpath=..')).toHaveAttribute('id', 'algorithm-panel');
+
+    const shell = page.locator('#game-canvas-shell');
+    const box = await shell.boundingBox();
+    expect(box && box.width, 'desktop map should use the freed vertical space').toBeGreaterThanOrEqual(400);
   });
 });
