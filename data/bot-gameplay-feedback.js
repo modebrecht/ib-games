@@ -98,15 +98,22 @@
     shell?.classList.add('p1-retry-ready');
   }
 
+  function resetToLevelStart() {
+    const reset = document.getElementById('btn-reset');
+    if (!reset || reset.disabled) return false;
+    reset.click();
+    return true;
+  }
+
   function resetBeforeRetryIfNeeded() {
     if (!retryNeedsReset) return;
     retryNeedsReset = false;
+    resetToLevelStart();
+  }
 
-    // Use the game's own reset control so every piece of level state is reset by
-    // the canonical path. The command tape stays intact; only the run position
-    // returns to the level start. This makes NOCHMAL deterministic for pupils.
-    const reset = document.getElementById('btn-reset');
-    if (reset && !reset.disabled) reset.click();
+  function playRequestsFreshRun() {
+    const label = (playLabel?.textContent || '').trim().toUpperCase();
+    return retryNeedsReset || label === 'NOCHMAL' || label === 'START' || label.startsWith('START ');
   }
 
   mapCurrentSpeed();
@@ -118,9 +125,22 @@
     });
   });
 
+  // Beginner rule: START / NOCHMAL always means "from the level start".
+  // Only an explicit resume state such as WEITER continues from the current bot
+  // position. Capture phase runs before the game's own play-button handler.
+  if (playButton) {
+    playButton.addEventListener('click', () => {
+      if (!playRequestsFreshRun()) return;
+      retryNeedsReset = false;
+      resetToLevelStart();
+    }, true);
+  }
+
   if (typeof startExecution === 'function') {
     const originalStartExecution = startExecution;
     startExecution = function(...args) {
+      // Programmatic retries do not pass through the play button, so keep this
+      // fallback for the NOCHMAL state.
       resetBeforeRetryIfNeeded();
       clearAttemptFeedback();
       mapCurrentSpeed();
