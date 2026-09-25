@@ -72,7 +72,7 @@ test.describe('7th-grade classroom smoke · phone portrait', () => {
     await page.goto('/bot-labyrinth.html');
     await waitForGame(page);
 
-    await expect.poll(() => page.evaluate(() => window.__IB_BOT_MESSAGE_ADDON_VERSION)).toBe('1.0.1');
+    await expect.poll(() => page.evaluate(() => window.__IB_BOT_MESSAGE_ADDON_VERSION)).toBe('1.1.0');
     await expect(page.locator('script[src="data/bot-message-addon.js"]')).toHaveCount(1);
     await expect(page.locator('script[src="data/bot-toast-hotfix.js"]'), 'Legacy Bot monkeypatch must not be loaded').toHaveCount(0);
 
@@ -173,6 +173,7 @@ test.describe('7th-grade classroom smoke · phone landscape', () => {
     await expect(page.locator('#game-canvas-shell')).toBeVisible();
     await expect(page.locator('#action-bar button:visible').first()).toBeVisible();
     await expect(page.locator('#btn-skip-level')).toHaveCount(1);
+    await expect(page.locator('#coach-message-slot')).not.toHaveClass(/coach-desktop-docked/);
 
     await page.addInitScript(() => localStorage.clear());
     await page.goto('/byte-blaster.html');
