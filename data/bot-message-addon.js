@@ -2,10 +2,11 @@
   const VISIBLE_MS = 6000;
   const FADE_MS = 260;
 
-  window.__IB_BOT_MESSAGE_ADDON_VERSION = '1.0.1';
+  window.__IB_BOT_MESSAGE_ADDON_VERSION = '1.1.0';
 
   const toast = document.getElementById('toast-alert');
   const missionCard = document.getElementById('mission-card');
+  const algorithmPanel = document.getElementById('algorithm-panel');
   const debugTip = document.getElementById('debug-tip');
 
   let toastHideTimer = null;
@@ -56,6 +57,25 @@
       pointer-events: none !important;
     }
     #toast-alert.opacity-0 { transform: none !important; }
+
+    @media (min-width: 900px) and (min-height: 500px) {
+      #coach-message-slot.coach-desktop-docked {
+        width: calc(100% - 1rem) !important;
+        max-width: none !important;
+        height: auto !important;
+        min-height: 2.5rem;
+        margin: .25rem .5rem .35rem !important;
+        padding: 0 !important;
+        align-self: stretch;
+      }
+      #coach-message-slot.coach-desktop-docked #toast-alert {
+        min-height: 2.25rem;
+        padding: .4rem .65rem !important;
+        font-size: 11px !important;
+        line-height: 1.2 !important;
+      }
+    }
+
     @media (max-width: 767px) {
       #coach-message-slot { height: 2.4rem; margin-bottom: .25rem; }
       #toast-alert {
@@ -69,8 +89,9 @@
   `;
   document.head.appendChild(style);
 
+  let slot = null;
   if (toast && missionCard) {
-    let slot = document.getElementById('coach-message-slot');
+    slot = document.getElementById('coach-message-slot');
     if (!slot) {
       slot = document.createElement('div');
       slot.id = 'coach-message-slot';
@@ -79,6 +100,27 @@
     }
     slot.appendChild(toast);
   }
+
+  const desktopQuery = window.matchMedia('(min-width: 900px) and (min-height: 500px)');
+
+  function placeCoachSlot() {
+    if (!slot || !missionCard) return;
+
+    if (desktopQuery.matches && algorithmPanel) {
+      slot.classList.add('coach-desktop-docked');
+      const first = algorithmPanel.firstElementChild;
+      if (first?.nextSibling) algorithmPanel.insertBefore(slot, first.nextSibling);
+      else algorithmPanel.appendChild(slot);
+      return;
+    }
+
+    slot.classList.remove('coach-desktop-docked');
+    missionCard.insertAdjacentElement('afterend', slot);
+  }
+
+  placeCoachSlot();
+  if (typeof desktopQuery.addEventListener === 'function') desktopQuery.addEventListener('change', placeCoachSlot);
+  else if (typeof desktopQuery.addListener === 'function') desktopQuery.addListener(placeCoachSlot);
 
   if (toast) {
     const text = document.getElementById('toast-text');

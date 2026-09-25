@@ -97,9 +97,203 @@ test.describe('Bot Labyrinth promoted gameplay', () => {
     const response = await request.get('/data/bot-gameplay-core.js');
     expect(response.ok()).toBeTruthy();
     const source = await response.text();
-    expect(source).toContain('if (atGoal && allTokens)');
+    expect(source).toContain('goalIsComplete');
     expect(source).toContain('stopExecution');
     expect(source).toContain('checkGoalCondition');
+  });
+
+  test('reaching the goal ends immediately even when the base step returns undefined', async ({ page }) => {
+    const result = await page.evaluate(async () => {
+      const source = await fetch('/data/bot-gameplay-core.js').then(response => response.text());
+      const frame = document.createElement('iframe');
+      document.body.appendChild(frame);
+      const w = frame.contentWindow;
+
+      w.AppState = {
+        bot: { x: 0, y: 0 },
+        goalPos: { x: 1, y: 0 },
+        tokensCollected: new Set(),
+        tokensTotal: 0,
+        status: 'RUNNING',
+      };
+      w.stepCalls = 0;
+      w.goalChecks = 0;
+      w.stopCalls = 0;
+
+      w.executeNextStep = function() {
+        w.stepCalls += 1;
+        if (w.stepCalls === 1) {
+          w.AppState.bot.x = 1;
+          setTimeout(() => w.executeNextStep(), 0);
+        } else {
+          w.AppState.bot.x = 2;
+        }
+        return undefined;
+      };
+
+      w.checkGoalCondition = function() {
+        w.goalChecks += 1;
+        if (w.AppState.bot.x === w.AppState.goalPos.x && w.AppState.bot.y === w.AppState.goalPos.y) {
+          w.AppState.status = 'WON';
+        }
+      };
+
+      w.stopExecution = function() {
+        w.stopCalls += 1;
+      };
+
+      w.eval(source);
+      w.executeNextStep();
+      await new Promise(resolve => setTimeout(resolve, 30));
+
+      const snapshot = {
+        status: w.AppState.status,
+        x: w.AppState.bot.x,
+        stepCalls: w.stepCalls,
+        goalChecks: w.goalChecks,
+        stopCalls: w.stopCalls,
+      };
+      frame.remove();
+      return snapshot;
+    });
+
+    expect(result.status).toBe('WON');
+    expect(result.x).toBe(1);
+    expect(result.stepCalls).toBe(1);
+    expect(result.goalChecks).toBe(1);
+    expect(result.stopCalls).toBe(1);
+  });
+
+  test('NOCHMAL resets through the native reset control before rerunning', async ({ page }) => {
+    const result = await page.evaluate(async () => {
+      const source = await fetch('/data/bot-gameplay-feedback.js').then(response => response.text());
+      const frame = document.createElement('iframe');
+      document.body.appendChild(frame);
+      const doc = frame.contentDocument;
+      const w = frame.contentWindow;
+
+      doc.body.innerHTML = `
+        <div id="game-canvas-shell"></div>
+        <button id="btn-play"><span id="btn-play-label">START</span></button>
+        <button id="btn-reset">RESET</button>
+      `;
+
+      w.AppState = {
+        speedMs: 230,
+        commands: [{ type: 'FORWARD' }],
+        startPos: { x: 0, y: 0, dir: 1 },
+        bot: { x: 1, y: 0, dir: 1 },
+        stepIndex: 4,
+        tokensCollected: new Set(),
+        status: 'CRASHED',
+        executing: false,
+      };
+      w.startCalls = 0;
+      w.resetClicks = 0;
+      w.stepSeenByStart = null;
+      w.startExecution = function() {
+        w.startCalls += 1;
+        w.stepSeenByStart = w.AppState.stepIndex;
+      };
+      w.handleCrash = function() {};
+      w.checkGoalCondition = function() {};
+      w.executeScan = function() {};
+      w.activateWarpIfPresent = function() { return false; };
+
+      doc.getElementById('btn-reset').addEventListener('click', () => {
+        w.resetClicks += 1;
+        w.AppState.bot = { ...w.AppState.startPos };
+        w.AppState.stepIndex = -1;
+        w.AppState.status = 'IDLE';
+      });
+
+      w.eval(source);
+      w.handleCrash('test');
+      const retryLabel = doc.getElementById('btn-play-label').textContent;
+      w.startExecution();
+
+      const snapshot = {
+        retryLabel,
+        resetClicks: w.resetClicks,
+        startCalls: w.startCalls,
+        stepSeenByStart: w.stepSeenByStart,
+      };
+      frame.remove();
+      return snapshot;
+    });
+
+    expect(result.retryLabel).toBe('NOCHMAL');
+    expect(result.resetClicks).toBe(1);
+    expect(result.startCalls).toBe(1);
+    expect(result.stepSeenByStart).toBe(-1);
+  });
+
+  test('full run restarts at command 1 after a partial step instead of skipping the first command', async ({ page }) => {
+    const result = await page.evaluate(async () => {
+      const source = await fetch('/data/bot-gameplay-feedback.js').then(response => response.text());
+      const frame = document.createElement('iframe');
+      document.body.appendChild(frame);
+      const doc = frame.contentDocument;
+      const w = frame.contentWindow;
+
+      doc.body.innerHTML = `
+        <div id="game-canvas-shell"></div>
+        <button id="btn-play"><span id="btn-play-label">START</span></button>
+        <button id="btn-reset">RESET</button>
+      `;
+
+      w.AppState = {
+        speedMs: 230,
+        commands: [{ type: 'FORWARD' }, { type: 'FORWARD' }, { type: 'FORWARD' }],
+        startPos: { x: 0, y: 0, dir: 1 },
+        bot: { x: 0, y: 0, dir: 1 },
+        // Reproduce the real failure: the bot can still look like it is at the
+        // start while command 1 is already marked as executed.
+        stepIndex: 0,
+        tokensCollected: new Set(),
+        status: 'IDLE',
+        executing: false,
+      };
+      w.resetClicks = 0;
+      w.executedCommands = 0;
+      w.startExecution = function() {
+        while (++w.AppState.stepIndex < w.AppState.commands.length) {
+          if (w.AppState.commands[w.AppState.stepIndex].type === 'FORWARD') {
+            w.AppState.bot.x += 1;
+            w.executedCommands += 1;
+          }
+        }
+      };
+      w.handleCrash = function() {};
+      w.checkGoalCondition = function() {};
+      w.executeScan = function() {};
+      w.activateWarpIfPresent = function() { return false; };
+
+      doc.getElementById('btn-reset').addEventListener('click', () => {
+        w.resetClicks += 1;
+        w.AppState.bot = { ...w.AppState.startPos };
+        w.AppState.stepIndex = -1;
+        w.AppState.tokensCollected.clear();
+        w.AppState.status = 'IDLE';
+      });
+
+      w.eval(source);
+      w.startExecution();
+
+      const snapshot = {
+        resetClicks: w.resetClicks,
+        executedCommands: w.executedCommands,
+        x: w.AppState.bot.x,
+        stepIndex: w.AppState.stepIndex,
+      };
+      frame.remove();
+      return snapshot;
+    });
+
+    expect(result.resetClicks).toBe(1);
+    expect(result.executedCommands).toBe(3);
+    expect(result.x).toBe(3);
+    expect(result.stepIndex).toBe(3);
   });
 
   test('boss enforces A-B-C core order and timed security sweeps', async ({ request }) => {
@@ -111,5 +305,27 @@ test.describe('Bot Labyrinth promoted gameplay', () => {
     expect(source).toContain("id: 'C'");
     expect(source).toContain('Security-Sweep ist AN');
     expect(source).toContain('sweepActive');
+  });
+});
+
+test.describe('Bot Labyrinth desktop layout', () => {
+  test.use({ viewport: { width: 1024, height: 576 } });
+
+  test('desktop feedback docks in the algorithm column and frees room for a larger map', async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('cybercode.tutorialDone', 'true');
+    });
+    await page.goto('/bot-labyrinth.html?teacher=1');
+    await waitForGame(page);
+
+    await expect.poll(() => page.evaluate(() => window.__IB_BOT_MESSAGE_ADDON_VERSION)).toBe('1.1.0');
+
+    const slot = page.locator('#coach-message-slot');
+    await expect(slot).toHaveClass(/coach-desktop-docked/);
+    await expect(slot.locator('xpath=..')).toHaveAttribute('id', 'algorithm-panel');
+
+    const shell = page.locator('#game-canvas-shell');
+    const box = await shell.boundingBox();
+    expect(box && box.width, 'desktop map should use the freed vertical space').toBeGreaterThanOrEqual(400);
   });
 });

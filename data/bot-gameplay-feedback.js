@@ -4,7 +4,10 @@
   const SPEEDS = { slow: 480, normal: 230, turbo: 90 };
   const DEFAULT_OLD_SPEEDS = new Set([360, 380]);
   const shell = document.getElementById('game-canvas-shell');
+  const playButton = document.getElementById('btn-play');
   const playLabel = document.getElementById('btn-play-label');
+
+  let retryNeedsReset = false;
 
   const style = document.createElement('style');
   style.textContent = `
@@ -60,8 +63,10 @@
       el.classList.remove('p1-step-error', 'p1-step-success');
     });
     shell?.classList.remove('p1-retry-ready');
-    document.getElementById('btn-play')?.classList.remove('p1-retry');
+    playButton?.classList.remove('p1-retry');
     playLabel?.classList.remove('p1-retry');
+    playButton?.removeAttribute('data-retry-from-start');
+    playButton?.removeAttribute('title');
   }
 
   function markFailedCommand(index) {
@@ -80,12 +85,52 @@
   }
 
   function setRetryReady() {
+    retryNeedsReset = true;
     if (playLabel) {
       playLabel.textContent = 'NOCHMAL';
       playLabel.classList.add('p1-retry');
     }
-    document.getElementById('btn-play')?.classList.add('p1-retry');
+    if (playButton) {
+      playButton.classList.add('p1-retry');
+      playButton.dataset.retryFromStart = 'true';
+      playButton.title = 'NOCHMAL startet wieder an der Ausgangsposition.';
+    }
     shell?.classList.add('p1-retry-ready');
+  }
+
+  function resetToLevelStart() {
+    const reset = document.getElementById('btn-reset');
+    if (reset && !reset.disabled) {
+      reset.click();
+      return true;
+    }
+    if (typeof resetBot === 'function') {
+      resetBot();
+      return true;
+    }
+    return false;
+  }
+
+  function isFreshLevelStart() {
+    const start = AppState.startPos;
+    const bot = AppState.bot;
+    const atStart = !!start && !!bot &&
+      bot.x === start.x &&
+      bot.y === start.y &&
+      bot.dir === start.dir;
+    const noExecutedCommand = (AppState.stepIndex ?? -1) === -1;
+    const noCollectedData = (AppState.tokensCollected?.size ?? 0) === 0;
+    return atStart && noExecutedCommand && noCollectedData;
+  }
+
+  function prepareFullRunFromStart() {
+    // Classroom rule: a full run is deterministic. Any call that starts the
+    // algorithm while it is not currently running begins at command 1 from the
+    // level's original bot state. STEP remains the only way to continue from a
+    // partially executed state.
+    if (AppState.executing || AppState.commands?.length === 0) return;
+    retryNeedsReset = false;
+    if (!isFreshLevelStart()) resetToLevelStart();
   }
 
   mapCurrentSpeed();
@@ -100,6 +145,7 @@
   if (typeof startExecution === 'function') {
     const originalStartExecution = startExecution;
     startExecution = function(...args) {
+      prepareFullRunFromStart();
       clearAttemptFeedback();
       mapCurrentSpeed();
       return originalStartExecution.apply(this, args);
@@ -145,9 +191,9 @@
   }
 
   if (typeof activateWarpIfPresent === 'function') {
-    const originalActivateWarp = activateWarpIfPresent;
+    const originalActivateWarpIfPresent = activateWarpIfPresent;
     activateWarpIfPresent = function(...args) {
-      const warped = originalActivateWarp.apply(this, args);
+      const warped = originalActivateWarpIfPresent.apply(this, args);
       if (warped) markCurrentSuccess();
       return warped;
     };
