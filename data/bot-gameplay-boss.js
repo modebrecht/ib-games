@@ -8,25 +8,27 @@
     { x: 6, y: 6, id: 'C' }
   ];
 
-  // PACKAGE 4 — a real three-phase finale. One programmed run can clear all
-  // phases; the arena reconfigures after each successful core scan.
+  // Level 10 is deliberately deterministic. Earlier versions tied barriers to
+  // the global command index, which made the finale feel random to pupils.
+  // The boss now has one clear rule: A opens the vertical gate, B opens the
+  // horizontal gate, C opens the exit. No hidden timing/parity state.
   LEVELS[BOSS_INDEX] = {
     id: 10,
     title: '10. BOSS: CORE BREACH',
-    desc: 'Drei Sicherheitsphasen. Scanne CORE A, dann B, dann C. Nach jedem Scan verändert sich die Arena.',
-    mission: 'Knacke CORE A → B → C und erreiche danach den Ausgang.',
-    takeaway: 'Ein größerer Algorithmus kann aus mehreren Teilzielen bestehen. Nach jedem Teilziel gelten neue Bedingungen.',
+    desc: 'Drei Phasen, eine klare Reihenfolge: CORE A öffnet das erste Schild, CORE B das zweite, CORE C den Ausgang.',
+    mission: 'Scanne CORE A → B → C und erreiche danach den Ausgang. Der GELBE Core ist immer dein nächstes Ziel.',
+    takeaway: 'Große Algorithmen werden leichter, wenn du sie in klare Teilziele zerlegst: A, dann B, dann C, dann Ziel.',
     size: 9,
     par: 18,
     start: { x: 0, y: 4, dir: DIR.EAST },
     goal: { x: 8, y: 4 },
-    tokens: CORE_ORDER.map(({x, y}) => ({ x, y })),
+    tokens: CORE_ORDER.map(({ x, y }) => ({ x, y })),
     walls: [
-      {x: 1, y: 1}, {x: 1, y: 7},
-      {x: 3, y: 0}, {x: 3, y: 8},
-      {x: 5, y: 0}, {x: 5, y: 8},
-      {x: 7, y: 1}, {x: 7, y: 7},
-      {x: 4, y: 3}, {x: 4, y: 5}
+      { x: 1, y: 1 }, { x: 1, y: 7 },
+      { x: 3, y: 0 }, { x: 3, y: 8 },
+      { x: 5, y: 0 }, { x: 5, y: 8 },
+      { x: 7, y: 1 }, { x: 7, y: 7 },
+      { x: 4, y: 3 }, { x: 4, y: 5 }
     ],
     hazards: [],
     rhythmicHazards: [],
@@ -73,7 +75,6 @@
   }
 
   function phase() {
-    // After C is scanned, stay visually in phase 3 until the exit is reached.
     return Math.min(3, collectedCount() + 1);
   }
 
@@ -81,22 +82,19 @@
     return CORE_ORDER[Math.min(collectedCount(), CORE_ORDER.length - 1)];
   }
 
-  function beat() {
-    return Math.max(0, AppState.stepIndex ?? 0);
-  }
-
-  function sweepActive() {
-    // Alternates each command. WAIT therefore has a real purpose in the boss.
-    return beat() % 2 === 0;
-  }
-
   function updateBossMission() {
     if (!inBoss() || !missionText) return;
     const n = collectedCount();
-    if (n <= 0) missionText.textContent = 'PHASE 1/3 · Schild aktiv · Scanne CORE A.';
-    else if (n === 1) missionText.textContent = `PHASE 2/3 · Vertikal-Sweep ${sweepActive() ? 'AN' : 'AUS'} · Scanne CORE B.`;
-    else if (n === 2) missionText.textContent = `PHASE 3/3 · Horizontal-Sweep ${sweepActive() ? 'AN' : 'AUS'} · Scanne CORE C.`;
-    else missionText.textContent = `CORE OFFEN · Horizontal-Sweep ${sweepActive() ? 'AN' : 'AUS'} · Zum Ausgang!`;
+
+    if (n === 0) {
+      missionText.textContent = 'PHASE 1/3 · GELB = nächstes Ziel · Scanne CORE A. Danach öffnet sich das mittlere Schild.';
+    } else if (n === 1) {
+      missionText.textContent = 'PHASE 2/3 · CORE A geschafft · Weg nach rechts OFFEN · Scanne jetzt CORE B.';
+    } else if (n === 2) {
+      missionText.textContent = 'PHASE 3/3 · CORE B geschafft · Weg nach unten OFFEN · Scanne jetzt CORE C.';
+    } else {
+      missionText.textContent = 'ALLE CORES GEKNACKT · Ausgang offen · Jetzt zum Ziel rechts!';
+    }
   }
 
   function phaseBurst() {
@@ -132,20 +130,17 @@
 
   function bossGateCrash(fromX, fromY, toX, toY) {
     if (!inBoss()) return false;
-    const p = phase();
+    const n = collectedCount();
 
-    if (p === 1 && crossesVerticalGate(fromX, fromY, toX, toY)) {
-      handleCrash('CORE-Schild aktiv. Scanne zuerst CORE A.');
+    // Gate 1 is a simple prerequisite, not a hidden timing puzzle.
+    if (n < 1 && crossesVerticalGate(fromX, fromY, toX, toY)) {
+      handleCrash('SCHILD GESPERRT · Erst CORE A scannen. Der gelbe Core zeigt dein nächstes Ziel.');
       return true;
     }
 
-    if (p === 2 && sweepActive() && crossesVerticalGate(fromX, fromY, toX, toY)) {
-      handleCrash('Security-Sweep ist AN. Nutze WARTEN und kreuze im AUS-Takt.');
-      return true;
-    }
-
-    if (p === 3 && sweepActive() && crossesHorizontalGate(fromX, fromY, toX, toY)) {
-      handleCrash('Security-Sweep ist AN. Nutze WARTEN und kreuze im AUS-Takt.');
+    // Gate 2 opens permanently after CORE B. No command-number parity involved.
+    if (n < 2 && crossesHorizontalGate(fromX, fromY, toX, toY)) {
+      handleCrash('SCHILD GESPERRT · Erst CORE B scannen. Danach öffnet sich der Weg nach unten.');
       return true;
     }
 
@@ -188,7 +183,7 @@
       const tokenHereIndex = CORE_ORDER.findIndex(core => core.x === AppState.bot.x && core.y === AppState.bot.y);
 
       if (tokenHereIndex >= 0 && tokenHereIndex !== expectedIndex && collectedCount() < CORE_ORDER.length) {
-        setMissionTemporarily(`CORE ${CORE_ORDER[tokenHereIndex].id} ist gesperrt · zuerst CORE ${expected.id}.`);
+        setMissionTemporarily(`CORE ${CORE_ORDER[tokenHereIndex].id} ist noch gesperrt · zuerst CORE ${expected.id}.`);
         if (typeof haptic === 'function') haptic(8);
         return false;
       }
@@ -199,9 +194,9 @@
 
       if (after > before) {
         phaseBurst();
-        if (after === 1) setMissionTemporarily('CORE A GEKNACKT · Schild fällt · Phase 2!', 900);
-        else if (after === 2) setMissionTemporarily('CORE B GEKNACKT · Sweep dreht · Phase 3!', 900);
-        else if (after === 3) setMissionTemporarily('CORE C GEKNACKT · Ausgang offen!', 900);
+        if (after === 1) setMissionTemporarily('CORE A GEKNACKT · Mittleres Schild OFFEN · Weiter zu B!', 1050);
+        else if (after === 2) setMissionTemporarily('CORE B GEKNACKT · Unteres Schild OFFEN · Weiter zu C!', 1050);
+        else if (after === 3) setMissionTemporarily('CORE C GEKNACKT · AUSGANG OFFEN!', 1050);
       }
 
       return result;
@@ -221,7 +216,7 @@
     ctx.fillStyle = done ? '#6ee7b7' : active ? '#fde68a' : '#94a3b8';
     ctx.shadowColor = done ? '#10b981' : active ? '#f59e0b' : '#475569';
     ctx.shadowBlur = active ? Math.max(10, cellSize * .18) : 5;
-    ctx.fillText(done ? `✓${core.id}` : `CORE ${core.id}`, cx, cy - cellSize * .28);
+    ctx.fillText(done ? `✓${core.id}` : active ? `▶ CORE ${core.id}` : `CORE ${core.id}`, cx, cy - cellSize * .28);
     ctx.restore();
   }
 
@@ -256,7 +251,19 @@
     ctx.restore();
   }
 
-  function drawVerticalBarrier(cellSize, active, shield = false) {
+  function drawBarrierLabel(text, x, y, cellSize, color) {
+    ctx.save();
+    ctx.font = `900 ${Math.max(8, cellSize * .12)}px ui-monospace, SFMono-Regular, Menlo, monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = color;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 5;
+    ctx.fillText(text, x * cellSize, y * cellSize);
+    ctx.restore();
+  }
+
+  function drawVerticalBarrier(cellSize, locked) {
     const x = 4 * cellSize;
     const top = 1 * cellSize;
     const bottom = 8 * cellSize;
@@ -264,22 +271,17 @@
     ctx.beginPath();
     ctx.moveTo(x, top);
     ctx.lineTo(x, bottom);
-    ctx.strokeStyle = shield ? '#a78bfa' : active ? '#fb7185' : '#38bdf8';
-    ctx.lineWidth = shield ? Math.max(7, cellSize * .10) : active ? Math.max(5, cellSize * .075) : Math.max(2, cellSize * .035);
+    ctx.strokeStyle = locked ? '#a78bfa' : '#34d399';
+    ctx.lineWidth = locked ? Math.max(7, cellSize * .10) : Math.max(2, cellSize * .035);
     ctx.shadowColor = ctx.strokeStyle;
-    ctx.shadowBlur = shield ? 22 : active ? 18 : 7;
-    if (!shield && !active) ctx.setLineDash([Math.max(4, cellSize * .09), Math.max(4, cellSize * .07)]);
+    ctx.shadowBlur = locked ? 22 : 7;
+    if (!locked) ctx.setLineDash([Math.max(4, cellSize * .09), Math.max(4, cellSize * .07)]);
     ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.shadowBlur = 0;
-    ctx.font = `900 ${Math.max(8, cellSize * .14)}px ui-monospace, SFMono-Regular, Menlo, monospace`;
-    ctx.textAlign = 'center';
-    ctx.fillStyle = shield ? '#ddd6fe' : active ? '#fecdd3' : '#bae6fd';
-    ctx.fillText(shield ? 'SCHILD' : active ? 'AN' : 'AUS', x, cellSize * .72);
     ctx.restore();
+    drawBarrierLabel(locked ? 'A ZUERST' : 'OFFEN', 4, .72, cellSize, locked ? '#ddd6fe' : '#a7f3d0');
   }
 
-  function drawHorizontalSweep(cellSize, active) {
+  function drawHorizontalBarrier(cellSize, locked) {
     const y = 4 * cellSize;
     const left = 4 * cellSize;
     const right = 9 * cellSize;
@@ -287,19 +289,14 @@
     ctx.beginPath();
     ctx.moveTo(left, y);
     ctx.lineTo(right, y);
-    ctx.strokeStyle = active ? '#fb7185' : '#38bdf8';
-    ctx.lineWidth = active ? Math.max(5, cellSize * .075) : Math.max(2, cellSize * .035);
+    ctx.strokeStyle = locked ? '#fb7185' : '#34d399';
+    ctx.lineWidth = locked ? Math.max(7, cellSize * .10) : Math.max(2, cellSize * .035);
     ctx.shadowColor = ctx.strokeStyle;
-    ctx.shadowBlur = active ? 18 : 7;
-    if (!active) ctx.setLineDash([Math.max(4, cellSize * .09), Math.max(4, cellSize * .07)]);
+    ctx.shadowBlur = locked ? 20 : 7;
+    if (!locked) ctx.setLineDash([Math.max(4, cellSize * .09), Math.max(4, cellSize * .07)]);
     ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.shadowBlur = 0;
-    ctx.font = `900 ${Math.max(8, cellSize * .14)}px ui-monospace, SFMono-Regular, Menlo, monospace`;
-    ctx.textAlign = 'right';
-    ctx.fillStyle = active ? '#fecdd3' : '#bae6fd';
-    ctx.fillText(active ? 'SWEEP AN' : 'SWEEP AUS', right - cellSize * .12, y - cellSize * .12);
     ctx.restore();
+    drawBarrierLabel(locked ? 'B ZUERST' : 'OFFEN', 7.65, 3.72, cellSize, locked ? '#fecdd3' : '#a7f3d0');
   }
 
   if (typeof render === 'function') {
@@ -311,14 +308,19 @@
       updateBossMission();
       const width = parseFloat(canvas.style.width) || 320;
       const cellSize = width / AppState.gridSize;
-      const p = phase();
-      const active = sweepActive();
+      const n = collectedCount();
 
       CORE_ORDER.forEach((core, i) => drawCoreMarker(core, i, cellSize));
       drawBossCore(cellSize);
-      if (p === 1) drawVerticalBarrier(cellSize, true, true);
-      else if (p === 2) drawVerticalBarrier(cellSize, active, false);
-      else drawHorizontalSweep(cellSize, active);
+
+      if (n === 0) {
+        drawVerticalBarrier(cellSize, true);
+      } else if (n === 1) {
+        drawVerticalBarrier(cellSize, false);
+        drawHorizontalBarrier(cellSize, true);
+      } else {
+        drawHorizontalBarrier(cellSize, false);
+      }
 
       return result;
     };
